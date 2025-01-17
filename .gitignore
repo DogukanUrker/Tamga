@@ -162,3 +162,6 @@ cython_debug/
 
 # DS_Store
 .DS_Store
+
+# Ignore .json file for tamga
+tamga.json
