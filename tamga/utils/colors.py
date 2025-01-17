@@ -86,6 +86,19 @@ class Color:
         return colorCode.colorCode if colorCode else ""
 
     @classmethod
+    def style(cls, styleName: str) -> str:
+        """
+        Get text style ANSI code
+        """
+        styleCodes = {
+            "bold": "\033[1m",
+            "italic": "\033[3m",
+            "underline": "\033[4m",
+            "strikethrough": "\033[9m",
+        }
+        return styleCodes.get(styleName, "")
+
+    @classmethod
     def getColorList(cls) -> list[str]:
         """
         Get list of all available color names
