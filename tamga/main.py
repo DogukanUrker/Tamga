@@ -59,9 +59,7 @@ class Tamga:
                     self.mongoURI, tls=True, tlsAllowInvalidCertificates=True
                 )
                 client = client[mongoDatabaseName][mongoCollectionName]
-                self.custom(
-                    "TAMGA: Successfully connected to MongoDB!", "MONGO", "green"
-                )
+                self._writeToConsole("Connected to MongoDB", "TAMGA", "lime")
             except Exception as e:
                 self.critical(f"TAMGA: Failed to connect to MongoDB: {e}")
 
