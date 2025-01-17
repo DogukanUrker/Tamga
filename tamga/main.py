@@ -65,8 +65,8 @@ class Tamga:
 
         # Initialize JSON file with empty array if it doesn't exist
         if self.logToJSON and not os.path.exists("tamga.json"):
-            with open("tamga.json", "w") as logFile:
-                json.dump([], logFile)
+            with open("tamga.json", "w") as file:
+                json.dump([], file)
 
     def log(self, message: str, level: str, color: str) -> None:
         """
@@ -97,8 +97,8 @@ class Tamga:
 
     def _writeToFile(self, message: str, level: str) -> None:
         """Write log entry to file."""
-        with open("tamga.log", "a") as logFile:
-            logFile.write(
+        with open("tamga.log", "a") as file:
+            file.write(
                 f"[{currentDate()} | {currentTime()} | {currentTimeZone()}] {level}: {message}\n"
             )
         return None
@@ -115,15 +115,15 @@ class Tamga:
         }
 
         # Read existing logs
-        with open("tamga.json", "r") as logFile:
-            logs = json.load(logFile)
+        with open("tamga.json", "r") as file:
+            logs = json.load(file)
 
         # Append new log
         logs.append(logEntry)
 
         # Write back all logs
-        with open("tamga.json", "w") as logFile:
-            json.dump(logs, logFile, indent=2)
+        with open("tamga.json", "w") as file:
+            json.dump(logs, file, indent=2)
 
         return None
 
