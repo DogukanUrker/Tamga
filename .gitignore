@@ -165,3 +165,6 @@ cython_debug/
 
 # Ignore .json file for tamga
 tamga.json
+
+# Ignore .db file for tamga
+tamga.db
