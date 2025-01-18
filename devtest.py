@@ -5,17 +5,30 @@ from datetime import datetime
 
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
+SMP_MAIL = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 tamga = Tamga(
-    logToFile=False,
+    logToFile=True,
     logToJSON=True,
     logToConsole=True,
-    logToMongo=False,
-    logToSQL=False,
+    logToMongo=True,
+    logToSQL=True,
+    logToAPI=True,
+    sendMail=True,
     mongoURI=MONGO_URI,
-    logFile="tamga2.log",
-    logJSON="tamga2.json",
+    mongoDatabaseName="tamga",
+    mongoCollectionName="logs",
+    logFile="tamga.log",
+    logJSON="tamga.json",
     logSQL="tamga.db",
-    sqlTable="logs2",
+    sqlTable="logs",
+    smtpServer="smtp.gmail.com",
+    smtpPort=587,
+    smtpMail=SMP_MAIL,
+    smtpPassword=SMTP_PASSWORD,
+    smtpReceivers=["dogukanurker@icloud.com"],
+    mailLevels=["MAIL"],
+    apiURL="http://127.0.0.1:5000/api/log",
 )
 startTime = datetime.now()
 tamga.info("This is an info message!")
