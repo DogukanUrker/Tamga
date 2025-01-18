@@ -7,6 +7,7 @@ import motor.motor_asyncio
 import asyncio
 import sqlite3
 import requests
+from datetime import datetime
 
 
 class Tamga:
@@ -50,6 +51,10 @@ class Tamga:
         smtpReceivers: list = None,
         mailLevels: list = ["MAIL"],
         apiURL: str = None,
+        maxLogSize: int = 10,
+        maxJsonSize: int = 10,
+        maxSqlSize: int = 50,
+        enableBackup: bool = True,
     ):
         """
         Initialize Tamga with optional file and JSON logging.
@@ -59,9 +64,27 @@ class Tamga:
             logToJSON: Enable logging to a JSON file (default: False)
             logToConsole: Enable logging to console (default: True)
             logToMongo: Enable logging to MongoDB (default: False)
+            logToSQL: Enable logging to SQL database (default: False)
+            logToAPI: Enable logging to an API (default: False)
+            sendMail: Enable sending logs via email (default: False)
             mongoURI: MongoDB connection URI
             mongoDatabaseName: MongoDB database name (default: "tamga")
             mongoCollectionName: MongoDB collection name (default: "logs")
+            logFile: Path to the log file (default: "tamga.log")
+            logJSON: Path to the JSON log file (default: "tamga.json")
+            logSQL: Path to the SQL log file (default: "tamga.db")
+            sqlTable: SQL table name for logs (default: "logs")
+            smtpServer: SMTP server address
+            smtpPort: SMTP server port
+            smtpMail: SMTP email address
+            smtpPassword: SMTP email password
+            smtpReceivers: List of email addresses to receive logs
+            mailLevels: List of log levels to send via email (default: ["MAIL"])
+            apiURL: URL of the API to send logs to
+            maxLogSize: Maximum size in MB for log file (default: 10)
+            maxJsonSize: Maximum size in MB for JSON file (default: 10)
+            maxSqlSize: Maximum size in MB for SQL file (default: 50)
+            enableBackup: Enable backup when max size is reached (default: True)
         """
         self.logToFile = logToFile
         self.logToJSON = logToJSON
@@ -84,6 +107,10 @@ class Tamga:
         self.sendMail = sendMail
         self.mailLevels = mailLevels
         self.apiURL = apiURL
+        self.maxLogSize = maxLogSize
+        self.maxJsonSize = maxJsonSize
+        self.maxSqlSize = maxSqlSize
+        self.enableBackup = enableBackup
 
         global client
         client = None
@@ -165,8 +192,45 @@ class Tamga:
 
         return None
 
+    def _checkFileSize(self, filePath: str, maxSizeMB: int) -> bool:
+        """Check if file size exceeds the maximum size limit."""
+        if not os.path.exists(filePath):
+            return False
+        return (os.path.getsize(filePath) / (1024 * 1024)) >= maxSizeMB
+
+    def _createBackup(self, filePath: str) -> None:
+        """Create a backup of the file with timestamp."""
+        if not os.path.exists(filePath):
+            return
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backupPath = f"{filePath}.{timestamp}.bak"
+        try:
+            import shutil
+
+            shutil.copy2(filePath, backupPath)
+        except Exception as e:
+            self.critical(f"Failed to create backup: {e}")
+
+    def _handleFileRotation(self, filePath: str, maxSizeMB: int) -> None:
+        """Handle file rotation when size limit is reached."""
+        if self._checkFileSize(filePath, maxSizeMB):
+            if self.enableBackup:
+                self._createBackup(filePath)
+            if filePath.endswith(".json"):
+                with open(filePath, "w") as f:
+                    json.dump([], f)
+            elif filePath.endswith(".db"):
+                conn = sqlite3.connect(filePath)
+                c = conn.cursor()
+                c.execute(f"DELETE FROM {self.sqlTable}")
+                conn.commit()
+                conn.close()
+            else:
+                open(filePath, "w").close()
+
     def _writeToFile(self, message: str, level: str) -> None:
         """Write log entry to file."""
+        self._handleFileRotation(self.logFile, self.maxLogSize)
         with open(self.logFile, "a") as file:
             file.write(
                 f"[{currentDate()} | {currentTime()} | {currentTimeZone()}] {level}: {message}\n"
@@ -175,6 +239,7 @@ class Tamga:
 
     def _writeToJSON(self, message: str, level: str) -> None:
         """Write log entry to JSON file."""
+        self._handleFileRotation(self.logJSON, self.maxJsonSize)
         logEntry = {
             "level": level,
             "message": message,
@@ -233,6 +298,8 @@ class Tamga:
         return None
 
     def _writeToSQL(self, message: str, level: str) -> None:
+        """Write log entry to SQL database."""
+        self._handleFileRotation(self.logSQL, self.maxSqlSize)
         conn = sqlite3.connect(self.logSQL)
         c = conn.cursor()
         c.execute(
