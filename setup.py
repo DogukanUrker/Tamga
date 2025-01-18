@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="tamga",
-    version="0.1.0",
+    version="0.1.5",
     author="Doğukan Ürker",
     author_email="dogukanurker@icloud.com",
     description="A modern, async-capable logging utility with multiple output formats and colorful console output",
@@ -31,11 +31,10 @@ setup(
     install_requires=[
         "aiofiles>=0.8.0",
         "aiosqlite>=0.17.0",
-        "motor>=3.0.0",
+        "pymongo==4.5.0",
+        "motor==3.3.2",
         "aiohttp>=3.8.0",
         "python-dotenv>=1.0.0",
-        "pymongo[srv]>=4.6.1",
-        "bson>=0.5.10",
         "requests>=2.31.0"
     ],
     keywords="logging, async, mongodb, colorful, console, file, json, sql, email",
