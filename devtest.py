@@ -9,8 +9,13 @@ tamga = Tamga(
     logToFile=True,
     logToJSON=True,
     logToConsole=True,
-    logToMongo=True,
+    logToMongo=False,
+    logToSQL=True,
     mongoURI=MONGO_URI,
+    logFile="tamga2.log",
+    logJSON="tamga2.json",
+    logSQL="tamga.db",
+    sqlTable="logs2",
 )
 startTime = datetime.now()
 tamga.info("This is an info message!")
