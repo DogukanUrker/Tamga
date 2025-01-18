@@ -6,6 +6,7 @@ import os
 import motor.motor_asyncio
 import asyncio
 import sqlite3
+import requests
 
 
 class Tamga:
@@ -34,6 +35,7 @@ class Tamga:
         logToConsole: bool = True,
         logToMongo: bool = False,
         logToSQL: bool = False,
+        logToAPI: bool = False,
         sendMail: bool = False,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
@@ -48,6 +50,7 @@ class Tamga:
         smtpPassword: str = None,
         smtpReceivers: list = None,
         mailLevels: list = ["MAIL"],
+        apiURL: str = None,
     ):
         """
         Initialize Tamga with optional file and JSON logging.
@@ -66,6 +69,7 @@ class Tamga:
         self.logToConsole = logToConsole
         self.logToMongo = logToMongo
         self.logToSQL = logToSQL
+        self.logToAPI = logToAPI
         self.mongoURI = mongoURI
         self.mongoDatabaseName = mongoDatabaseName
         self.mongoCollectionName = mongoCollectionName
@@ -80,6 +84,7 @@ class Tamga:
         self.smtpReceivers = smtpReceivers
         self.sendMail = sendMail
         self.mailLevels = mailLevels
+        self.apiURL = apiURL
 
         global client
         client = None
@@ -151,6 +156,9 @@ class Tamga:
         if self.sendMail:
             self._sendMail(message, level)
 
+        if self.logToAPI:
+            self._writeToAPI(message, level)
+
         if self.logToMongo:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -214,6 +222,20 @@ class Tamga:
                 messageContent=message,
                 logLevel=level,
             )
+        return None
+
+    def _writeToAPI(self, message: str, level: str) -> None:
+        requests.post(
+            self.apiURL,
+            json={
+                "level": level,
+                "message": message,
+                "date": currentDate(),
+                "time": currentTime(),
+                "timezone": currentTimeZone(),
+                "timestamp": currentTimeStamp(),
+            },
+        )
         return None
 
     def _writeToSQL(self, message: str, level: str) -> None:
