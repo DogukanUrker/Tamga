@@ -1,5 +1,6 @@
 from .utils.colors import Color
 from .utils.time import currentDate, currentTime, currentTimeZone, currentTimeStamp
+from .utils.mail import Mail
 import json
 import os
 import motor.motor_asyncio
@@ -33,6 +34,7 @@ class Tamga:
         logToConsole: bool = True,
         logToMongo: bool = False,
         logToSQL: bool = False,
+        sendMail: bool = False,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
         mongoCollectionName: str = "logs",
@@ -40,6 +42,12 @@ class Tamga:
         logJSON: str = "tamga.json",
         logSQL: str = "tamga.db",
         sqlTable: str = "logs",
+        smtpServer: str = None,
+        smtpPort: int = None,
+        smtpMail: str = None,
+        smtpPassword: str = None,
+        smtpReceivers: list = None,
+        mailLevels: list = ["MAIL"],
     ):
         """
         Initialize Tamga with optional file and JSON logging.
@@ -65,9 +73,19 @@ class Tamga:
         self.logJSON = logJSON
         self.logSQL = logSQL
         self.sqlTable = sqlTable
+        self.smtpServer = smtpServer
+        self.smtpPort = smtpPort
+        self.smtpMail = smtpMail
+        self.smtpPassword = smtpPassword
+        self.smtpReceivers = smtpReceivers
+        self.sendMail = sendMail
+        self.mailLevels = mailLevels
 
         global client
         client = None
+
+        global mailClient
+        mailClient = None
 
         if self.logToMongo:
             try:
@@ -99,6 +117,16 @@ class Tamga:
                 f"CREATE TABLE IF NOT EXISTS {self.sqlTable} (level TEXT, message TEXT, date TEXT, time TEXT, timezone TEXT, timestamp REAL)"
             )
 
+        if self.sendMail:
+            mailClient = Mail(
+                serverAddress=self.smtpServer,
+                portNumber=self.smtpPort,
+                userName=self.smtpMail,
+                userPassword=self.smtpPassword,
+                senderEmail=self.smtpMail,
+                receiverEmails=self.smtpReceivers,
+            )
+
     def log(self, message: str, level: str, color: str) -> None:
         """
         Main logging method that handles all types of logs.
@@ -119,6 +147,9 @@ class Tamga:
 
         if self.logToSQL:
             self._writeToSQL(message, level)
+
+        if self.sendMail:
+            self._sendMail(message, level)
 
         if self.logToMongo:
             loop = asyncio.get_event_loop()
@@ -174,6 +205,15 @@ class Tamga:
             f"{Color.background(color)}{Color.style('bold')} {level} "
             f"{Color.endCode} {Color.text(color)}{message}{Color.endCode}"
         )
+        return None
+
+    def _sendMail(self, message: str, level: str) -> None:
+        if level in self.mailLevels:
+            mailClient.sendMail(
+                emailSubject=f"Tamga Logger - {currentDate()}",
+                messageContent=message,
+                logLevel=level,
+            )
         return None
 
     def _writeToSQL(self, message: str, level: str) -> None:
@@ -235,6 +275,8 @@ class Tamga:
 
     def mail(self, message: str) -> None:
         self.log(message, "MAIL", "neutral")
+        if not self.sendMail:
+            self.critical("TAMGA: Mail logging is not enabled!")
 
     def metric(self, message: str) -> None:
         self.log(message, "METRIC", "cyan")
