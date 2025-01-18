@@ -14,7 +14,6 @@ class Tamga:
     A modern logging utility that supports console, file, and JSON logging with colored output.
     """
 
-    # Define valid log levels and their associated colors
     LOG_LEVELS = {
         "INFO": "sky",
         "WARNING": "amber",
@@ -102,7 +101,6 @@ class Tamga:
             except Exception as e:
                 self.critical(f"TAMGA: Failed to connect to MongoDB: {e}")
 
-        # Initialize JSON file with empty array if it doesn't exist
         if self.logToJSON and not os.path.exists(self.logJSON):
             with open(self.logJSON, "w") as file:
                 json.dump([], file)
@@ -117,7 +115,6 @@ class Tamga:
             conn = sqlite3.connect(self.logSQL)
             c = conn.cursor()
 
-            # Check if table exists, create if not
             c.execute(
                 f"CREATE TABLE IF NOT EXISTS {self.sqlTable} (level TEXT, message TEXT, date TEXT, time TEXT, timezone TEXT, timestamp REAL)"
             )
@@ -187,14 +184,11 @@ class Tamga:
             "timestamp": currentTimeStamp(),
         }
 
-        # Read existing logs
         with open(self.logJSON, "r") as file:
             logs = json.load(file)
 
-        # Append new log
         logs.append(logEntry)
 
-        # Write back all logs
         with open(self.logJSON, "w") as file:
             json.dump(logs, file, indent=2)
 

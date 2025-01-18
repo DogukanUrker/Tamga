@@ -21,9 +21,7 @@ class ColorTests(unittest.TestCase):
         """Test all available text colors"""
         for colorName in self.availableColors:
             colorCode = Color.text(colorName)
-            # Test if color code is generated
             self.assertTrue(colorCode.startswith("\033[38"))
-            # Test if color can be applied and reset
             coloredText = f"{colorCode}{self.testMessage}{Color.endCode}"
             self.assertTrue(coloredText.endswith(Color.endCode))
 
@@ -31,9 +29,7 @@ class ColorTests(unittest.TestCase):
         """Test all available background colors"""
         for colorName in self.availableColors:
             colorCode = Color.background(colorName)
-            # Test if color code is generated
             self.assertTrue(colorCode.startswith("\033[48"))
-            # Test if color can be applied and reset
             coloredText = f"{colorCode}{self.testMessage}{Color.endCode}"
             self.assertTrue(coloredText.endswith(Color.endCode))
 
@@ -46,9 +42,7 @@ class ColorTests(unittest.TestCase):
     def testColorDemonstration(self):
         """Demonstrate all colors in action"""
         for colorName in self.availableColors:
-            # Print text colors
             print(f"{Color.text(colorName)}Text in {colorName}{Color.endCode}")
-            # Print background colors
             print(
                 f"{Color.background(colorName)}Background in {colorName}{Color.endCode}"
             )

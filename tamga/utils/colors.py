@@ -26,7 +26,6 @@ class Color:
 
     endCode: str = "\033[0m"
 
-    # Color codes dictionary using RGB values
     __colorPalette: dict = {
         "slate": (100, 116, 139),
         "gray": (107, 114, 128),
