@@ -4,6 +4,7 @@ import json
 import os
 import motor.motor_asyncio
 import asyncio
+import sqlite3
 
 
 class Tamga:
@@ -28,9 +29,14 @@ class Tamga:
         logToJSON: bool = False,
         logToConsole: bool = True,
         logToMongo: bool = False,
+        logToSQL: bool = False,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
         mongoCollectionName: str = "logs",
+        logFile: str = "tamga.log",
+        logJSON: str = "tamga.json",
+        logSQL: str = "tamga.db",
+        sqlTable: str = "logs",
     ):
         """
         Initialize Tamga with optional file and JSON logging.
@@ -48,7 +54,14 @@ class Tamga:
         self.logToJSON = logToJSON
         self.logToConsole = logToConsole
         self.logToMongo = logToMongo
+        self.logToSQL = logToSQL
         self.mongoURI = mongoURI
+        self.mongoDatabaseName = mongoDatabaseName
+        self.mongoCollectionName = mongoCollectionName
+        self.logFile = logFile
+        self.logJSON = logJSON
+        self.logSQL = logSQL
+        self.sqlTable = sqlTable
 
         global client
         client = None
@@ -64,9 +77,24 @@ class Tamga:
                 self.critical(f"TAMGA: Failed to connect to MongoDB: {e}")
 
         # Initialize JSON file with empty array if it doesn't exist
-        if self.logToJSON and not os.path.exists("tamga.json"):
-            with open("tamga.json", "w") as file:
+        if self.logToJSON and not os.path.exists(self.logJSON):
+            with open(self.logJSON, "w") as file:
                 json.dump([], file)
+
+        if self.logToFile and not os.path.exists(self.logFile):
+            with open(self.logFile, "w") as file:
+                file.write("")
+
+        if self.logToSQL and not os.path.exists(self.logSQL):
+            with open(self.logSQL, "w") as file:
+                file.write("")
+            conn = sqlite3.connect(self.logSQL)
+            c = conn.cursor()
+
+            # Check if table exists, create if not
+            c.execute(
+                f"CREATE TABLE IF NOT EXISTS {self.sqlTable} (level TEXT, message TEXT, date TEXT, time TEXT, timezone TEXT, timestamp REAL)"
+            )
 
     def log(self, message: str, level: str, color: str) -> None:
         """
@@ -86,6 +114,9 @@ class Tamga:
         if self.logToConsole:
             self._writeToConsole(message, level, color)
 
+        if self.logToSQL:
+            self._writeToSQL(message, level)
+
         if self.logToMongo:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -97,7 +128,7 @@ class Tamga:
 
     def _writeToFile(self, message: str, level: str) -> None:
         """Write log entry to file."""
-        with open("tamga.log", "a") as file:
+        with open(self.logFile, "a") as file:
             file.write(
                 f"[{currentDate()} | {currentTime()} | {currentTimeZone()}] {level}: {message}\n"
             )
@@ -115,14 +146,14 @@ class Tamga:
         }
 
         # Read existing logs
-        with open("tamga.json", "r") as file:
+        with open(self.logJSON, "r") as file:
             logs = json.load(file)
 
         # Append new log
         logs.append(logEntry)
 
         # Write back all logs
-        with open("tamga.json", "w") as file:
+        with open(self.logJSON, "w") as file:
             json.dump(logs, file, indent=2)
 
         return None
@@ -140,6 +171,24 @@ class Tamga:
             f"{Color.background(color)}{Color.style('bold')} {level} "
             f"{Color.endCode} {Color.text(color)}{message}{Color.endCode}"
         )
+        return None
+
+    def _writeToSQL(self, message: str, level: str) -> None:
+        conn = sqlite3.connect(self.logSQL)
+        c = conn.cursor()
+        c.execute(
+            f"INSERT INTO {self.sqlTable} (level, message, date, time, timezone, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                level,
+                message,
+                currentDate(),
+                currentTime(),
+                currentTimeZone(),
+                currentTimeStamp(),
+            ),
+        )
+        conn.commit()
+        conn.close()
         return None
 
     async def _writeToMongo(self, message: str, level: str, client) -> None:
