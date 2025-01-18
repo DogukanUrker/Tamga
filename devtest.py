@@ -6,11 +6,11 @@ from datetime import datetime
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 tamga = Tamga(
-    logToFile=True,
+    logToFile=False,
     logToJSON=True,
     logToConsole=True,
     logToMongo=False,
-    logToSQL=True,
+    logToSQL=False,
     mongoURI=MONGO_URI,
     logFile="tamga2.log",
     logJSON="tamga2.json",
@@ -25,6 +25,9 @@ tamga.success("This is a success message!")
 tamga.debug("This is a debug message!")
 tamga.critical("This is a critical message!")
 tamga.database("This is a database message!")
+tamga.mail("This is a mail message!")
+tamga.metric("This is a metric message!")
+tamga.trace("This is a trace message!")
 tamga.custom("This is a custom message!", "CUSTOM", "orange")
 endTime = datetime.now()
 print(f"Time taken: {endTime - startTime}")

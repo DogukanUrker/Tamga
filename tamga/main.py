@@ -21,6 +21,9 @@ class Tamga:
         "DEBUG": "indigo",
         "CRITICAL": "red",
         "DATABASE": "green",
+        "MAIL": "neutral",
+        "METRIC": "cyan",
+        "TRACE": "gray",
     }
 
     def __init__(
@@ -229,6 +232,15 @@ class Tamga:
 
     def database(self, message: str) -> None:
         self.log(message, "DATABASE", "green")
+
+    def mail(self, message: str) -> None:
+        self.log(message, "MAIL", "neutral")
+
+    def metric(self, message: str) -> None:
+        self.log(message, "METRIC", "cyan")
+
+    def trace(self, message: str) -> None:
+        self.log(message, "TRACE", "gray")
 
     def custom(self, message: str, level: str, color: str) -> None:
         self.log(message, level, color)
