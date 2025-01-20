@@ -29,12 +29,7 @@ setup(
     ],
     python_requires=">=3.7",
     install_requires=[
-        "aiofiles>=0.8.0",
-        "aiosqlite>=0.17.0",
-        "pymongo==4.5.0",
         "motor==3.3.2",
-        "aiohttp>=3.8.0",
-        "python-dotenv>=1.0.0",
         "requests>=2.31.0"
     ],
     keywords="logging, async, mongodb, colorful, console, file, json, sql, email",
