@@ -2,6 +2,9 @@
 
 A modern, logging utility for Python with multiple output formats and colorful console output.
 
+<img width="1631" alt="Screenshot 2025-01-20 at 20 58 17" src="https://github.com/user-attachments/assets/34752145-9715-42cc-b575-e7991b960e05" />
+
+
 ## Features
 
 - 🎨 Colorful console output using Tailwind CSS color palette
