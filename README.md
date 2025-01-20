@@ -1,4 +1,4 @@
-# Tamga
+# Tamga [![PyPI Downloads](https://static.pepy.tech/badge/tamga)](https://pepy.tech/projects/tamga)
 
 A modern, async-capable logging utility for Python with multiple output formats and colorful console output.
 
