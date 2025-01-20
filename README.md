@@ -1,6 +1,6 @@
 # Tamga [![PyPI Downloads](https://static.pepy.tech/badge/tamga)](https://pepy.tech/projects/tamga)
 
-A modern, async-capable logging utility for Python with multiple output formats and colorful console output.
+A modern, logging utility for Python with multiple output formats and colorful console output.
 
 ## Features
 
@@ -11,7 +11,6 @@ A modern, async-capable logging utility for Python with multiple output formats 
 - 🚀 MongoDB integration
 - 📧 Email notifications for specific log levels
 - 🌐 API logging support
-- ⚡ Async/await support
 - 🔄 Automatic file rotation and backup
 - 🎯 Multiple log levels with customizable colors
 
