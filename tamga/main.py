@@ -129,15 +129,15 @@ class Tamga:
                 self.critical(f"TAMGA: Failed to connect to MongoDB: {e}")
 
         if self.logToJSON and not os.path.exists(self.logJSON):
-            with open(self.logJSON, "w") as file:
+            with open(self.logJSON, "w", encoding="utf-8") as file:
                 json.dump([], file)
 
         if self.logToFile and not os.path.exists(self.logFile):
-            with open(self.logFile, "w") as file:
+            with open(self.logFile, "w", encoding="utf-8") as file:
                 file.write("")
 
         if self.logToSQL and not os.path.exists(self.logSQL):
-            with open(self.logSQL, "w") as file:
+            with open(self.logSQL, "w", encoding="utf-8") as file:
                 file.write("")
             conn = sqlite3.connect(self.logSQL)
             c = conn.cursor()
@@ -217,7 +217,7 @@ class Tamga:
             if self.enableBackup:
                 self._createBackup(filePath)
             if filePath.endswith(".json"):
-                with open(filePath, "w") as f:
+                with open(filePath, "w", encoding="utf-8") as f:
                     json.dump([], f)
             elif filePath.endswith(".db"):
                 conn = sqlite3.connect(filePath)
@@ -226,12 +226,12 @@ class Tamga:
                 conn.commit()
                 conn.close()
             else:
-                open(filePath, "w").close()
+                open(filePath, "w", encoding="utf-8").close()
 
     def _writeToFile(self, message: str, level: str) -> None:
         """Write log entry to file."""
         self._handleFileRotation(self.logFile, self.maxLogSize)
-        with open(self.logFile, "a") as file:
+        with open(self.logFile, "a", encoding="utf-8") as file:
             file.write(
                 f"[{currentDate()} | {currentTime()} | {currentTimeZone()}] {level}: {message}\n"
             )
@@ -249,12 +249,12 @@ class Tamga:
             "timestamp": currentTimeStamp(),
         }
 
-        with open(self.logJSON, "r") as file:
+        with open(self.logJSON, "r", encoding="utf-8") as file:
             logs = json.load(file)
 
         logs.append(logEntry)
 
-        with open(self.logJSON, "w") as file:
+        with open(self.logJSON, "w", encoding="utf-8") as file:
             json.dump(logs, file, indent=2)
 
         return None
