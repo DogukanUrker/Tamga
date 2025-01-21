@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="tamga",
-    version="0.1.6",
+    version="0.1.7",
     author="Doğukan Ürker",
     author_email="dogukanurker@icloud.com",
     description="A modern, async-capable logging utility with multiple output formats and colorful console output",
