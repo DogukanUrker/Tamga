@@ -33,10 +33,8 @@ def testBackupFeature():
         smtpReceivers=["dogukanurker@icloud.com"],
         mailLevels=["MAIL"],
         apiURL="http://127.0.0.1:5000/api/log",
-        # Set small file size limits to test backup feature
-        maxLogSize=0.001,  # 100KB for log file
-        maxJsonSize=1,  # 100KB for JSON file
-        maxSqlSize=1,  # 100KB for SQL file
+        maxJsonSize=1,  
+        maxSqlSize=1,
         enableBackup=True,
     )
 
