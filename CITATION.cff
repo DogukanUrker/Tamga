@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "Tamga"
+type: software
+authors:
+  - given-names: Doğukan Mete
+    family-names: Ürker
+    email: dogukanurker@icloud.com
+repository-code: https://github.com/dogukanurker/Tamga
+url: https://tamga.vercel.app
+abstract: "Modern, logging utility for Python with multiple output formats and colorful console output."
+keywords:
+  - logger
+  - pip
+  - python
+  - async
+license: MIT
