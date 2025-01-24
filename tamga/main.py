@@ -89,6 +89,9 @@ class Tamga:
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
             enableBackup: Enable backup when max size is reached (default: True)
         """
+
+        self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
+
         self.logToFile = logToFile
         self.logToJSON = logToJSON
         self.logToConsole = logToConsole
@@ -264,17 +267,26 @@ class Tamga:
 
     def _writeToConsole(self, message: str, level: str, color: str) -> None:
         """Write formatted log entry to console."""
-        print(
+        prefix = (
             f"{Color.text('gray')}["
             f"{Color.endCode}{Color.text('indigo')}{currentDate()}"
             f"{Color.endCode} {Color.text('gray')}|"
             f"{Color.endCode} {Color.text('violet')}{currentTime()}"
             f"{Color.text('gray')} |"
             f"{Color.endCode} {Color.text('purple')}{currentTimeZone()}"
-            f"{Color.text('gray')}]{Color.endCode} "
-            f"{Color.background(color)}{Color.style('bold')} {level} "
-            f"{Color.endCode} {Color.text(color)}{message}{Color.endCode}"
+            f"{Color.text('gray')}]"
+            f"{Color.endCode}"
         )
+
+        levelSTR = (
+            f"{Color.background(color)}"
+            f"{Color.style('bold')}"
+            f" {level:<{self.maxLevelWidth}} "
+            f"{Color.endCode}"
+        )
+
+        print(f"{prefix} {levelSTR} {Color.text(color)}{message}{Color.endCode}")
+
         return None
 
     def _sendMail(self, message: str, level: str) -> None:
