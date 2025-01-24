@@ -1,1 +1,1 @@
-"""Tamga utilities module""" 
+"""Tamga utilities module"""

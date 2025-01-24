@@ -1,13 +1,15 @@
-from tamga import Tamga
 import os
-from dotenv import load_dotenv
-from datetime import datetime
 import time
+from datetime import datetime
+
+from dotenv import load_dotenv
+
+from tamga import Tamga
 
 load_dotenv()
-MONGO_URI = os.getenv("MONGO_URI")
-SMP_MAIL = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+MONGO_URI: "str | None" = os.getenv("MONGO_URI")
+SMP_MAIL: "str | None" = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD: "str | None" = os.getenv("SMTP_PASSWORD")
 
 
 def testBackupFeature():
@@ -33,7 +35,7 @@ def testBackupFeature():
         smtpReceivers=["dogukanurker@icloud.com"],
         mailLevels=["MAIL"],
         apiURL="http://127.0.0.1:5000/api/log",
-        maxJsonSize=1,  
+        maxJsonSize=1,
         maxSqlSize=1,
         enableBackup=True,
     )
