@@ -375,7 +375,7 @@ class Tamga:
 
     def dir(self, message: str, **kwargs) -> None:
         if kwargs:
-            strJSON = json.dumps(kwargs)
+            strJSON = json.dumps(kwargs, ensure_ascii=False)
             formatted = strJSON.replace('"', "'")
             logMessage = f"{message} | {formatted}"
         else:
