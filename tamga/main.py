@@ -1,13 +1,15 @@
-from .utils.colors import Color
-from .utils.time import currentDate, currentTime, currentTimeZone, currentTimeStamp
-from .utils.mail import Mail
+import asyncio
 import json
 import os
-import motor.motor_asyncio
-import asyncio
 import sqlite3
-import requests
 from datetime import datetime
+
+import motor.motor_asyncio
+import requests
+
+from .utils.colors import Color
+from .utils.mail import Mail
+from .utils.time import currentDate, currentTime, currentTimeStamp, currentTimeZone
 
 
 class Tamga:
@@ -26,6 +28,7 @@ class Tamga:
         "MAIL": "neutral",
         "METRIC": "cyan",
         "TRACE": "gray",
+        "DIR": "yellow",
     }
 
     def __init__(
@@ -369,3 +372,13 @@ class Tamga:
 
     def custom(self, message: str, level: str, color: str) -> None:
         self.log(message, level, color)
+
+    def dir(self, message: str, **kwargs) -> None:
+        if kwargs:
+            strJSON = json.dumps(kwargs)
+            formatted = strJSON.replace('"', "'")
+            logMessage = f"{message} | {formatted}"
+        else:
+            logMessage = message
+
+        self.log(logMessage, "DIR", "yellow")
