@@ -33,6 +33,7 @@ class Tamga:
 
     def __init__(
         self,
+        isColored: bool = True,
         logToFile: bool = False,
         logToJSON: bool = False,
         logToConsole: bool = True,
@@ -92,6 +93,7 @@ class Tamga:
 
         self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
 
+        self.isColored = isColored
         self.logToFile = logToFile
         self.logToJSON = logToJSON
         self.logToConsole = logToConsole
@@ -267,6 +269,13 @@ class Tamga:
 
     def _writeToConsole(self, message: str, level: str, color: str) -> None:
         """Write formatted log entry to console."""
+
+        if not self.isColored:
+            print(
+                f"[{currentDate()} | {currentTime()} | {currentTimeZone()}]  {level:<{self.maxLevelWidth}}  {message}"
+            )
+            return None
+
         prefix = (
             f"{Color.text('gray')}["
             f"{Color.endCode}{Color.text('indigo')}{currentDate()}"
