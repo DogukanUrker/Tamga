@@ -1,6 +1,6 @@
 [project]
 name = "tamga"
-version = "0.1.10"
+version = "0.1.11"
 authors = [{name = "Doğukan Ürker", email = "dogukanurker@icloud.com"},]
 description = "A modern, async-capable logging utility with multiple output formats and colorful console output"
 readme = "README.md"
