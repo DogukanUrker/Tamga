@@ -263,7 +263,7 @@ class Tamga:
         logs.append(logEntry)
 
         with open(self.logJSON, "w", encoding="utf-8") as file:
-            json.dump(logs, file, indent=2)
+            json.dump(logs, file, ensure_ascii=False, indent=2)
 
         return None
 
