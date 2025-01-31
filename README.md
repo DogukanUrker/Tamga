@@ -5,7 +5,7 @@ A modern, logging utility for Python with multiple output formats and colorful c
 tam·ga / noun      
 An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
 
-<img width="1631" alt="Screenshot 2025-01-20 at 20 58 17" src="https://github.com/user-attachments/assets/34752145-9715-42cc-b575-e7991b960e05" />
+<img alt="Terminal" src="https://github.com/DogukanUrker/Tamga/blob/main/Images/terminal.png?raw=true" />
 
 
 ## Features
