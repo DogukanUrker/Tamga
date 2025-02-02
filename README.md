@@ -2,6 +2,8 @@
 
 A modern, logging utility for Python with multiple output formats and colorful console output.    
 
+[![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
+
 tam·ga / noun      
 An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
 
