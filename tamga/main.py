@@ -290,7 +290,7 @@ class Tamga:
     def _sendMail(self, message: str, level: str) -> None:
         if level in self.mailLevels:
             mailClient.sendMail(
-                emailSubject=f"Tamga Logger - {currentDate()}",
+                emailSubject=f"TAMGA: {level} Log - {currentDate()}",
                 messageContent=message,
                 logLevel=level,
             )
