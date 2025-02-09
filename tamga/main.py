@@ -7,6 +7,7 @@ from datetime import datetime
 import motor.motor_asyncio
 import requests
 
+from .constants import LOG_LEVELS
 from .utils.colors import Color
 from .utils.mail import Mail
 from .utils.time import currentDate, currentTime, currentTimeStamp, currentTimeZone
@@ -17,19 +18,7 @@ class Tamga:
     A modern logging utility that supports console, file, and JSON logging with colored output.
     """
 
-    LOG_LEVELS = {
-        "INFO": "sky",
-        "WARNING": "amber",
-        "ERROR": "rose",
-        "SUCCESS": "emerald",
-        "DEBUG": "indigo",
-        "CRITICAL": "red",
-        "DATABASE": "green",
-        "MAIL": "neutral",
-        "METRIC": "cyan",
-        "TRACE": "gray",
-        "DIR": "yellow",
-    }
+    LOG_LEVELS = LOG_LEVELS
 
     def __init__(
         self,
