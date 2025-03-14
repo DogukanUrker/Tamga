@@ -1,14 +1,13 @@
 # Tamga [![PyPI Downloads](https://static.pepy.tech/badge/tamga)](https://pepy.tech/projects/tamga)
 
-A modern, logging utility for Python with multiple output formats and colorful console output.    
+A modern, logging utility for Python with multiple output formats and colorful console output.
 
 [![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
 
-tam·ga / noun      
+tam·ga / noun  
 An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
 
 <img alt="Terminal" src="https://github.com/DogukanUrker/Tamga/blob/main/Images/terminal.png?raw=true" />
-
 
 ## Features
 
@@ -24,9 +23,30 @@ An ancient Turkic symbol or seal used for marking ownership, identity, or lineag
 
 ## Installation
 
-```bash
-pip install tamga
-```
+To install the `tamga` package, you can use the following commands based on your requirements:
+
+- Basic installation:
+
+  ```bash
+  pip install tamga
+  ```
+
+- With API logging support:
+
+  ```bash
+  pip install tamga[api]
+  ```
+
+- With MongoDB integration:
+
+  ```bash
+  pip install tamga[mongo]
+  ```
+
+- Full installation with all features:
+  ```bash
+  pip install tamga[full]
+  ```
 
 ## Quick Start
 
@@ -126,4 +146,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Doğukan Ürker
 - Email: dogukanurker@icloud.com
-- GitHub: [@dogukanurker](https://github.com/dogukanurker) 
+- GitHub: [@dogukanurker](https://github.com/dogukanurker)
