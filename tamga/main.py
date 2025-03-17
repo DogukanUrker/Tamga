@@ -4,8 +4,8 @@ import os
 import sqlite3
 from datetime import datetime
 
-import motor.motor_asyncio
-import requests
+
+
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
@@ -117,6 +117,7 @@ class Tamga:
 
         if self.logToMongo:
             try:
+                import motor.motor_asyncio
                 client = motor.motor_asyncio.AsyncIOMotorClient(
                     self.mongoURI, tls=True, tlsAllowInvalidCertificates=True
                 )
@@ -297,6 +298,7 @@ class Tamga:
         return None
 
     def _writeToAPI(self, message: str, level: str) -> None:
+        import requests
         requests.post(
             self.apiURL,
             json={
