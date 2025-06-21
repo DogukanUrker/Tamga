@@ -4,10 +4,12 @@ A modern, logging utility for Python with multiple output formats and colorful c
 
 [![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
 
-tam·ga / noun  
+tam·ga / noun
 An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
 
 <img alt="Terminal" src="https://github.com/DogukanUrker/Tamga/blob/main/Images/terminal.png?raw=true" />
+
+**AI Integration:** For AI/LLM integration, see [LLMs.txt](https://raw.githubusercontent.com/DogukanUrker/Tamga/refs/heads/main/llms.txt) or access documentation directly via [Context7](https://context7.ai/docs/dogukanurker/tamga)
 
 ## Features
 
