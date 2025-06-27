@@ -168,7 +168,7 @@ logger.dir("User action",
 - `sendMail` (bool): Send email notifications (default: False)
 
 ### Performance Parameters
-- `bufferSize` (int): Number of logs to buffer before writing (default: 10)
+- `bufferSize` (int): Number of logs to buffer before writing (default: 50)
 - `showTimezone` (bool): Include timezone in timestamps (default: True)
 
 ### File Management

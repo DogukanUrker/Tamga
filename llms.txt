@@ -89,7 +89,7 @@ logger = Tamga(
     logSQL="logs/app.db",
 
     # Performance settings (new in v0.2.0)
-    bufferSize=10,
+    bufferSize=50,
     showTimezone=True,
 
     # Rotation settings
@@ -160,7 +160,7 @@ pip install tamga[full]
 - `showTimezone` (bool): Show timezone in timestamps (default: True)
 
 ### Performance Parameters
-- `bufferSize` (int): Number of logs to buffer before writing to disk (default: 10)
+- `bufferSize` (int): Number of logs to buffer before writing to disk (default: 50)
 
 ### File Management
 - `logFile` (str): Path to log file (default: "tamga.log")
@@ -362,7 +362,7 @@ logger = Tamga(
     logToConsole=True,
     logToAPI=True,
     apiURL=os.getenv("CENTRAL_LOG_API"),
-    bufferSize=50
+    bufferSize=25
 )
 ```
 
@@ -456,7 +456,7 @@ from flask import Flask, request
 from tamga import Tamga
 
 app = Flask(__name__)
-logger = Tamga(logToFile=True, bufferSize=10)
+logger = Tamga(logToFile=True, bufferSize=50)
 
 @app.before_request
 def log_request():
@@ -490,7 +490,7 @@ from celery import Celery
 from tamga import Tamga
 
 app = Celery('tasks')
-logger = Tamga(logToMongo=True, bufferSize=5)
+logger = Tamga(logToMongo=True, bufferSize=25)
 
 @app.task
 def process_data(data_id):

@@ -48,7 +48,7 @@ class Tamga:
         maxJsonSize: int = 10,
         maxSqlSize: int = 50,
         enableBackup: bool = True,
-        bufferSize: int = 10,
+        bufferSize: int = 50,
     ):
         """
         Initialize Tamga with optional features.
@@ -80,7 +80,7 @@ class Tamga:
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
             enableBackup: Enable backup when max size is reached (default: True)
             showTimezone: Show timezone in logs (default: True)
-            bufferSize: Number of logs to buffer before writing to file (default: 10)
+            bufferSize: Number of logs to buffer before writing to file (default: 50)
         """
         self.isColored = isColored
         self.logToFile = logToFile
