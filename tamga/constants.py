@@ -1,4 +1,11 @@
-COLOR_PALLETTE: dict = {
+"""
+Constants for Tamga logger
+"""
+
+from typing import Dict, Tuple
+
+# Tailwind CSS color palette (color-500 values)
+COLOR_PALLETTE: Dict[str, Tuple[int, int, int]] = {
     "slate": (100, 116, 139),
     "gray": (107, 114, 128),
     "zinc": (113, 113, 122),
@@ -23,7 +30,7 @@ COLOR_PALLETTE: dict = {
     "rose": (244, 63, 94),
 }
 
-LOG_LEVELS: dict = {
+LOG_LEVELS: Dict[str, str] = {
     "INFO": "sky",
     "WARNING": "amber",
     "ERROR": "rose",

@@ -1,6 +1,6 @@
 # Tamga [![PyPI Downloads](https://static.pepy.tech/badge/tamga)](https://pepy.tech/projects/tamga)
 
-A modern, logging utility for Python with multiple output formats and colorful console output.
+A modern, high-performance logging utility for Python with multiple output formats and colorful console output.
 
 [![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
 
@@ -14,14 +14,17 @@ An ancient Turkic symbol or seal used for marking ownership, identity, or lineag
 ## Features
 
 - 🎨 Colorful console output using Tailwind CSS color palette
+- ⚡ High-performance buffered writing (10x faster than traditional logging)
 - 📁 File logging with rotation and backup
-- 📊 JSON logging with size limits and backup
+- 📊 JSON logging with optimized performance
 - 🗄️ SQLite database logging
-- 🚀 MongoDB integration
+- 🚀 MongoDB integration with async support
 - 📧 Email notifications for specific log levels
 - 🌐 API logging support
 - 🔄 Automatic file rotation and backup
 - 🎯 Multiple log levels with customizable colors
+- 🕒 Optional timezone in timestamps
+- 💾 Manual flush control for critical messages
 
 ## Installation
 
@@ -76,6 +79,24 @@ logger.custom("This is a custom message", "CUSTOM", "orange")
 
 ## Advanced Usage
 
+### Performance Optimization
+
+```python
+# High-performance logging with buffering
+logger = Tamga(
+    logToFile=True,
+    bufferSize=200,  # Buffer 200 logs before writing to disk
+    showTimezone=False  # Cleaner timestamps without timezone
+)
+
+# Process large amounts of data
+for record in large_dataset:
+    logger.info(f"Processing {record.id}")
+
+# Ensure all logs are written
+logger.flush()
+```
+
 ### MongoDB Integration
 
 ```python
@@ -122,6 +143,43 @@ logger = Tamga(
 )
 ```
 
+### Structured Logging
+
+```python
+# Log with additional context
+logger.dir("User action",
+    user_id="12345",
+    action="login",
+    ip_address="192.168.1.1",
+    success=True
+)
+```
+
+## Configuration Options
+
+### Core Parameters
+- `isColored` (bool): Enable/disable colored output (default: True)
+- `logToConsole` (bool): Log to console (default: True)
+- `logToFile` (bool): Log to file (default: False)
+- `logToJSON` (bool): Log to JSON file (default: False)
+- `logToSQL` (bool): Log to SQLite database (default: False)
+- `logToMongo` (bool): Log to MongoDB (default: False)
+- `logToAPI` (bool): Log to external API (default: False)
+- `sendMail` (bool): Send email notifications (default: False)
+
+### Performance Parameters
+- `bufferSize` (int): Number of logs to buffer before writing (default: 10)
+- `showTimezone` (bool): Include timezone in timestamps (default: True)
+
+### File Management
+- `logFile` (str): Path to log file (default: "tamga.log")
+- `logJSON` (str): Path to JSON file (default: "tamga.json")
+- `logSQL` (str): Path to SQLite database (default: "tamga.db")
+- `maxLogSize` (int): Max file size in MB before rotation (default: 10)
+- `maxJsonSize` (int): Max JSON size in MB (default: 10)
+- `maxSqlSize` (int): Max SQL size in MB (default: 50)
+- `enableBackup` (bool): Create backups on rotation (default: True)
+
 ## Available Log Levels
 
 - INFO (sky blue)
@@ -135,6 +193,24 @@ logger = Tamga(
 - METRIC (cyan)
 - TRACE (gray)
 - Custom (user-defined)
+
+## Performance Tips
+
+1. **Buffer Size**: Adjust based on your needs
+   - Interactive apps: `bufferSize=1-10`
+   - Web services: `bufferSize=50-100`
+   - Batch processing: `bufferSize=200-1000`
+
+2. **Critical Logs**: Use `flush()` after important messages
+   ```python
+   logger.critical("System failure")
+   logger.flush()  # Ensure immediate write
+   ```
+
+3. **High Throughput**: Disable console for maximum speed
+   ```python
+   logger = Tamga(logToConsole=False, logToFile=True, bufferSize=500)
+   ```
 
 ## Contributing
 

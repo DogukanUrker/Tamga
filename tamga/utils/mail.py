@@ -2,11 +2,14 @@ import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import List
 
 from ..constants import COLOR_PALLETTE, LOG_LEVELS
 
 
 class Mail:
+    """Email notification handler for Tamga logger."""
+
     def __init__(
         self,
         serverAddress: str,
@@ -14,7 +17,7 @@ class Mail:
         userName: str,
         userPassword: str,
         senderEmail: str,
-        receiverEmails: list,
+        receiverEmails: List[str],
     ):
         self.serverAddress = serverAddress
         self.portNumber = portNumber
@@ -23,12 +26,55 @@ class Mail:
         self.senderEmail = senderEmail
         self.receiverEmails = receiverEmails
 
-    def getHtmlTemplate(self, messageContent: str, logLevel: str = "INFO") -> str:
-        currentTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def sendMail(
+        self,
+        emailSubject: str,
+        messageContent: str,
+        logLevel: str = "INFO",
+        enableHtml: bool = True,
+    ) -> bool:
+        """
+        Send email notification with log message.
 
+        Args:
+            emailSubject: Email subject line
+            messageContent: Log message content
+            logLevel: Log level for styling
+            enableHtml: Whether to send HTML formatted email
+
+        Returns:
+            True if email sent successfully, False otherwise
+        """
+        try:
+            emailMessage = MIMEMultipart("alternative")
+            emailMessage["Subject"] = emailSubject
+            emailMessage["From"] = self.senderEmail
+            emailMessage["To"] = ", ".join(self.receiverEmails)
+
+            emailMessage.attach(MIMEText(messageContent, "plain"))
+
+            if enableHtml:
+                htmlContent = self._generateHtmlContent(messageContent, logLevel)
+                emailMessage.attach(MIMEText(htmlContent, "html"))
+
+            with smtplib.SMTP(self.serverAddress, self.portNumber) as server:
+                server.starttls()
+                server.login(self.userName, self.userPassword)
+                server.send_message(emailMessage)
+
+            return True
+
+        except Exception as error:
+            print(f"Failed to send email: {error}")
+            return False
+
+    def _generateHtmlContent(self, messageContent: str, logLevel: str) -> str:
+        """Generate HTML email template with styling."""
         colorName = LOG_LEVELS.get(logLevel.upper(), "blue")
-        rgb = COLOR_PALLETTE.get(colorName, (0, 0, 0))
+        rgb = COLOR_PALLETTE.get(colorName, (59, 130, 246))
         logColor = f"rgb({rgb[0]}, {rgb[1]}, {rgb[2]})"
+
+        currentTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         return f"""
         <!DOCTYPE html>
@@ -44,6 +90,7 @@ class Mail:
                     --text-primary: #F9FAFB;
                     --text-secondary: #D1D5DB;
                     --border-color: rgba(255, 255, 255, 0.1);
+                    --log-color: {logColor};
                 }}
 
                 * {{
@@ -76,13 +123,12 @@ class Mail:
 
                 .header {{
                     padding: 32px;
-                    position: relative;
                     background: var(--surface-bg);
                     border-bottom: 1px solid var(--border-color);
+                    text-align: center;
                 }}
 
                 .header h1 {{
-                    text-align: center;
                     font-size: 24px;
                     font-weight: 600;
                     letter-spacing: -0.5px;
@@ -95,25 +141,19 @@ class Mail:
                     padding: 32px;
                 }}
 
-                .status-container {{
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    margin-bottom: 24px;
-                }}
-
                 .log-level {{
                     display: inline-flex;
                     align-items: center;
                     padding: 6px 12px;
-                    background-color: {logColor}22;
-                    color: {logColor};
-                    border: 1px solid {logColor}44;
+                    background-color: var(--log-color)22;
+                    color: var(--log-color);
+                    border: 1px solid var(--log-color)44;
                     border-radius: 8px;
                     font-size: 13px;
                     font-weight: 500;
                     letter-spacing: 0.3px;
                     text-transform: uppercase;
+                    margin-bottom: 24px;
                 }}
 
                 .log-level::before {{
@@ -121,7 +161,7 @@ class Mail:
                     display: inline-block;
                     width: 8px;
                     height: 8px;
-                    background-color: {logColor};
+                    background-color: var(--log-color);
                     border-radius: 50%;
                     margin-right: 8px;
                 }}
@@ -139,6 +179,7 @@ class Mail:
                 .message pre {{
                     white-space: pre-wrap;
                     word-wrap: break-word;
+                    margin: 0;
                 }}
 
                 .footer {{
@@ -165,22 +206,10 @@ class Mail:
                 }}
 
                 @media (max-width: 600px) {{
-                    body {{
-                        padding: 16px;
-                    }}
-
-                    .wrapper {{
-                        border-radius: 12px;
-                    }}
-
-                    .header, .content {{
-                        padding: 24px;
-                    }}
-
-                    .message {{
-                        padding: 20px;
-                        font-size: 14px;
-                    }}
+                    body {{ padding: 16px; }}
+                    .wrapper {{ border-radius: 12px; }}
+                    .header, .content {{ padding: 24px; }}
+                    .message {{ padding: 20px; font-size: 14px; }}
                 }}
             </style>
         </head>
@@ -190,9 +219,7 @@ class Mail:
                     <h1>Tamga Logger Alert</h1>
                 </div>
                 <div class="content">
-                    <div class="status-container">
-                        <div class="log-level">{logLevel.upper()}</div>
-                    </div>
+                    <div class="log-level">{logLevel.upper()}</div>
                     <div class="message">
                         <pre>{messageContent}</pre>
                     </div>
@@ -210,36 +237,3 @@ class Mail:
         </body>
         </html>
         """
-
-    def sendMail(
-        self,
-        emailSubject: str,
-        messageContent: str,
-        logLevel: str = "INFO",
-        enableHtml: bool = True,
-    ):
-        try:
-            emailMessage = MIMEMultipart("alternative")
-            emailMessage["Subject"] = emailSubject
-            emailMessage["From"] = self.senderEmail
-            emailMessage["To"] = ", ".join(self.receiverEmails)
-
-            textContent = MIMEText(messageContent, "plain")
-            htmlContent = MIMEText(
-                self.getHtmlTemplate(messageContent, logLevel), "html"
-            )
-
-            emailMessage.attach(textContent)
-            if enableHtml:
-                emailMessage.attach(htmlContent)
-
-            mailServer = smtplib.SMTP(self.serverAddress, self.portNumber)
-            mailServer.starttls()
-            mailServer.login(self.userName, self.userPassword)
-            mailServer.send_message(emailMessage)
-            mailServer.quit()
-            return True
-
-        except Exception as errorDetails:
-            print(f"Error: {errorDetails}")
-            return False

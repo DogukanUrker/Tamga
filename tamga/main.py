@@ -2,10 +2,9 @@ import asyncio
 import json
 import os
 import sqlite3
+import threading
 from datetime import datetime
-
-
-
+from typing import Any, Dict
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
@@ -30,6 +29,7 @@ class Tamga:
         logToSQL: bool = False,
         logToAPI: bool = False,
         sendMail: bool = False,
+        showTimezone: bool = True,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
         mongoCollectionName: str = "logs",
@@ -48,9 +48,10 @@ class Tamga:
         maxJsonSize: int = 10,
         maxSqlSize: int = 50,
         enableBackup: bool = True,
+        bufferSize: int = 10,
     ):
         """
-        Initialize Tamga with optional file and JSON logging.
+        Initialize Tamga with optional features.
 
         Args:
             logToFile: Enable logging to a file (default: False)
@@ -78,10 +79,9 @@ class Tamga:
             maxJsonSize: Maximum size in MB for JSON file (default: 10)
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
             enableBackup: Enable backup when max size is reached (default: True)
+            showTimezone: Show timezone in logs (default: True)
+            bufferSize: Number of logs to buffer before writing to file (default: 10)
         """
-
-        self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
-
         self.isColored = isColored
         self.logToFile = logToFile
         self.logToJSON = logToJSON
@@ -89,6 +89,8 @@ class Tamga:
         self.logToMongo = logToMongo
         self.logToSQL = logToSQL
         self.logToAPI = logToAPI
+        self.sendMail = sendMail
+        self.showTimezone = showTimezone
         self.mongoURI = mongoURI
         self.mongoDatabaseName = mongoDatabaseName
         self.mongoCollectionName = mongoCollectionName
@@ -101,254 +103,390 @@ class Tamga:
         self.smtpMail = smtpMail
         self.smtpPassword = smtpPassword
         self.smtpReceivers = smtpReceivers
-        self.sendMail = sendMail
         self.mailLevels = mailLevels
         self.apiURL = apiURL
         self.maxLogSize = maxLogSize
         self.maxJsonSize = maxJsonSize
         self.maxSqlSize = maxSqlSize
         self.enableBackup = enableBackup
+        self.bufferSize = bufferSize
 
-        global client
-        client = None
+        self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
+        self._mongo_client = None
+        self._mail_client = None
+        self._file_buffer = []
+        self._json_buffer = []
+        self._buffer_lock = threading.Lock()
 
-        global mailClient
-        mailClient = None
+        self._init_services()
 
+    def _init_services(self):
+        """Initialize external services and create necessary files."""
         if self.logToMongo:
-            try:
-                import motor.motor_asyncio
-                client = motor.motor_asyncio.AsyncIOMotorClient(
-                    self.mongoURI, tls=True, tlsAllowInvalidCertificates=True
-                )
-                client = client[mongoDatabaseName][mongoCollectionName]
-                self._writeToConsole("Connected to MongoDB", "TAMGA", "lime")
-            except Exception as e:
-                self.critical(f"TAMGA: Failed to connect to MongoDB: {e}")
-
-        if self.logToJSON and not os.path.exists(self.logJSON):
-            with open(self.logJSON, "w", encoding="utf-8") as file:
-                json.dump([], file)
-
-        if self.logToFile and not os.path.exists(self.logFile):
-            with open(self.logFile, "w", encoding="utf-8") as file:
-                file.write("")
-
-        if self.logToSQL and not os.path.exists(self.logSQL):
-            with open(self.logSQL, "w", encoding="utf-8") as file:
-                file.write("")
-            conn = sqlite3.connect(self.logSQL)
-            c = conn.cursor()
-
-            c.execute(
-                f"CREATE TABLE IF NOT EXISTS {self.sqlTable} (level TEXT, message TEXT, date TEXT, time TEXT, timezone TEXT, timestamp REAL)"
-            )
+            self._init_mongo()
 
         if self.sendMail:
-            mailClient = Mail(
-                serverAddress=self.smtpServer,
-                portNumber=self.smtpPort,
-                userName=self.smtpMail,
-                userPassword=self.smtpPassword,
-                senderEmail=self.smtpMail,
-                receiverEmails=self.smtpReceivers,
+            self._init_mail()
+
+        if self.logToFile:
+            self._ensure_file_exists(self.logFile)
+
+        if self.logToJSON:
+            self._init_json_file()
+
+        if self.logToSQL:
+            self._init_sql_db()
+
+    def _init_mongo(self):
+        """Initialize MongoDB connection."""
+        try:
+            import motor.motor_asyncio
+
+            client = motor.motor_asyncio.AsyncIOMotorClient(
+                self.mongoURI, tls=True, tlsAllowInvalidCertificates=True
             )
+            self._mongo_client = client[self.mongoDatabaseName][
+                self.mongoCollectionName
+            ]
+            self._log_internal("Connected to MongoDB", "TAMGA", "lime")
+        except Exception as e:
+            self._log_internal(f"Failed to connect to MongoDB: {e}", "CRITICAL", "red")
+
+    def _init_mail(self):
+        """Initialize mail client."""
+        self._mail_client = Mail(
+            serverAddress=self.smtpServer,
+            portNumber=self.smtpPort,
+            userName=self.smtpMail,
+            userPassword=self.smtpPassword,
+            senderEmail=self.smtpMail,
+            receiverEmails=self.smtpReceivers,
+        )
+
+    def _init_json_file(self):
+        """Initialize JSON log file."""
+        if not os.path.exists(self.logJSON):
+            with open(self.logJSON, "w", encoding="utf-8") as f:
+                json.dump([], f)
+
+    def _init_sql_db(self):
+        """Initialize SQLite database."""
+        self._ensure_file_exists(self.logSQL)
+        with sqlite3.connect(self.logSQL) as conn:
+            conn.execute(
+                f"""CREATE TABLE IF NOT EXISTS {self.sqlTable}
+                (level TEXT, message TEXT, date TEXT, time TEXT,
+                timezone TEXT, timestamp REAL)"""
+            )
+
+    def _ensure_file_exists(self, filepath: str):
+        """Ensure file exists, create if not."""
+        if not os.path.exists(filepath):
+            os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+            open(filepath, "w", encoding="utf-8").close()
+
+    def _format_timestamp(self) -> str:
+        """Format timestamp string based on settings."""
+        parts = [currentDate(), currentTime()]
+        if self.showTimezone:
+            parts.append(currentTimeZone())
+        return " | ".join(parts)
+
+    def _log_internal(self, message: str, level: str, color: str):
+        """Internal logging for Tamga messages."""
+        if self.logToConsole:
+            self._write_to_console(message, level, color)
 
     def log(self, message: str, level: str, color: str) -> None:
         """
         Main logging method that handles all types of logs.
-
-        Args:
-            message: The message to log
-            level: The log level
-            color: Color for console output
         """
-        if self.logToFile:
-            self._writeToFile(message, level)
 
-        if self.logToJSON:
-            self._writeToJSON(message, level)
-
-        if self.logToConsole:
-            self._writeToConsole(message, level, color)
-
-        if self.logToSQL:
-            self._writeToSQL(message, level)
-
-        if self.sendMail:
-            self._sendMail(message, level)
-
-        if self.logToAPI:
-            self._writeToAPI(message, level)
-
-        if self.logToMongo:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.create_task(self._writeToMongo(message, level, client))
-            else:
-                loop.run_until_complete(self._writeToMongo(message, level, client))
-
-        return None
-
-    def _checkFileSize(self, filePath: str, maxSizeMB: int) -> bool:
-        """Check if file size exceeds the maximum size limit."""
-        if not os.path.exists(filePath):
-            return False
-        return (os.path.getsize(filePath) / (1024 * 1024)) >= maxSizeMB
-
-    def _createBackup(self, filePath: str) -> None:
-        """Create a backup of the file with timestamp."""
-        if not os.path.exists(filePath):
-            return
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backupPath = f"{filePath}.{timestamp}.bak"
-        try:
-            import shutil
-
-            shutil.copy2(filePath, backupPath)
-        except Exception as e:
-            self.critical(f"Failed to create backup: {e}")
-
-    def _handleFileRotation(self, filePath: str, maxSizeMB: int) -> None:
-        """Handle file rotation when size limit is reached."""
-        if self._checkFileSize(filePath, maxSizeMB):
-            if self.enableBackup:
-                self._createBackup(filePath)
-            if filePath.endswith(".json"):
-                with open(filePath, "w", encoding="utf-8") as f:
-                    json.dump([], f)
-            elif filePath.endswith(".db"):
-                conn = sqlite3.connect(filePath)
-                c = conn.cursor()
-                c.execute(f"DELETE FROM {self.sqlTable}")
-                conn.commit()
-                conn.close()
-            else:
-                open(filePath, "w", encoding="utf-8").close()
-
-    def _writeToFile(self, message: str, level: str) -> None:
-        """Write log entry to file."""
-        self._handleFileRotation(self.logFile, self.maxLogSize)
-        with open(self.logFile, "a", encoding="utf-8") as file:
-            file.write(
-                f"[{currentDate()} | {currentTime()} | {currentTimeZone()}] {level}: {message}\n"
-            )
-        return None
-
-    def _writeToJSON(self, message: str, level: str) -> None:
-        """Write log entry to JSON file."""
-        self._handleFileRotation(self.logJSON, self.maxJsonSize)
-        logEntry = {
-            "level": level,
+        log_data = {
             "message": message,
+            "level": level,
+            "color": color,
+            "timestamp": self._format_timestamp(),
             "date": currentDate(),
             "time": currentTime(),
-            "timezone": currentTimeZone(),
-            "timestamp": currentTimeStamp(),
+            "timezone": currentTimeZone() if self.showTimezone else None,
+            "unix_timestamp": currentTimeStamp(),
         }
 
-        with open(self.logJSON, "r", encoding="utf-8") as file:
-            logs = json.load(file)
+        if self.logToConsole:
+            self._write_to_console(message, level, color)
 
-        logs.append(logEntry)
+        if self.logToFile:
+            self._buffer_file_write(log_data)
 
-        with open(self.logJSON, "w", encoding="utf-8") as file:
-            json.dump(logs, file, ensure_ascii=False, indent=2)
+        if self.logToJSON:
+            self._buffer_json_write(log_data)
 
-        return None
+        if self.logToSQL:
+            self._write_to_sql(log_data)
 
-    def _writeToConsole(self, message: str, level: str, color: str) -> None:
+        if self.sendMail and level in self.mailLevels:
+            self._send_mail_async(message, level)
+
+        if self.logToAPI:
+            self._write_to_api_async(log_data)
+
+        if self.logToMongo:
+            self._write_to_mongo_async(log_data)
+
+    def _buffer_file_write(self, log_data: Dict[str, Any]):
+        """Buffer file writes for better performance."""
+        with self._buffer_lock:
+            self._file_buffer.append(log_data)
+            if len(self._file_buffer) >= self.bufferSize:
+                self._flush_file_buffer()
+
+    def _buffer_json_write(self, log_data: Dict[str, Any]):
+        """Buffer JSON writes for better performance."""
+        with self._buffer_lock:
+            self._json_buffer.append(log_data)
+            if len(self._json_buffer) >= self.bufferSize:
+                self._flush_json_buffer()
+
+    def _flush_file_buffer(self):
+        """Flush file buffer to disk."""
+        if not self._file_buffer:
+            return
+
+        self._handle_file_rotation(self.logFile, self.maxLogSize)
+
+        try:
+            with open(self.logFile, "a", encoding="utf-8") as f:
+                for log_data in self._file_buffer:
+                    f.write(
+                        f"[{log_data['timestamp']}] {log_data['level']}: {log_data['message']}\n"
+                    )
+            self._file_buffer.clear()
+        except Exception as e:
+            self._log_internal(f"Failed to write to file: {e}", "ERROR", "red")
+
+    def _flush_json_buffer(self):
+        """Flush JSON buffer to disk efficiently."""
+        if not self._json_buffer:
+            return
+
+        self._handle_file_rotation(self.logJSON, self.maxJsonSize)
+
+        try:
+            with open(self.logJSON, "r+", encoding="utf-8") as f:
+                f.seek(0, 2)
+                file_size = f.tell()
+
+                if file_size > 2:
+                    f.seek(file_size - 2)
+                    f.write(",\n")
+                else:
+                    f.seek(0)
+                    f.write("[\n")
+
+                entries = [
+                    json.dumps(
+                        {
+                            "level": log["level"],
+                            "message": log["message"],
+                            "date": log["date"],
+                            "time": log["time"],
+                            "timezone": log["timezone"],
+                            "timestamp": log["unix_timestamp"],
+                        },
+                        ensure_ascii=False,
+                    )
+                    for log in self._json_buffer
+                ]
+
+                f.write(",\n".join(entries))
+                f.write("\n]")
+
+            self._json_buffer.clear()
+        except Exception as e:
+            self._log_internal(f"Failed to write to JSON: {e}", "ERROR", "red")
+
+    def _write_to_console(self, message: str, level: str, color: str):
         """Write formatted log entry to console."""
-
         if not self.isColored:
             print(
-                f"[{currentDate()} | {currentTime()} | {currentTimeZone()}]  {level:<{self.maxLevelWidth}}  {message}"
+                f"[{self._format_timestamp()}]  {level:<{self.maxLevelWidth}}  {message}"
             )
-            return None
+            return
 
-        prefix = (
-            f"{Color.text('gray')}["
-            f"{Color.endCode}{Color.text('indigo')}{currentDate()}"
-            f"{Color.endCode} {Color.text('gray')}|"
-            f"{Color.endCode} {Color.text('violet')}{currentTime()}"
-            f"{Color.text('gray')} |"
-            f"{Color.endCode} {Color.text('purple')}{currentTimeZone()}"
-            f"{Color.text('gray')}]"
-            f"{Color.endCode}"
-        )
+        prefix_parts = [
+            f"{Color.text('gray')}[{Color.endCode}",
+            f"{Color.text('indigo')}{currentDate()}{Color.endCode}",
+            f"{Color.text('gray')}|{Color.endCode}",
+            f"{Color.text('violet')}{currentTime()}{Color.endCode}",
+        ]
 
-        levelSTR = (
+        if self.showTimezone:
+            prefix_parts.extend(
+                [
+                    f"{Color.text('gray')}|{Color.endCode}",
+                    f"{Color.text('purple')}{currentTimeZone()}{Color.endCode}",
+                ]
+            )
+
+        prefix_parts.append(f"{Color.text('gray')}]{Color.endCode}")
+        prefix = " ".join(prefix_parts)
+
+        level_str = (
             f"{Color.background(color)}"
             f"{Color.style('bold')}"
             f" {level:<{self.maxLevelWidth}} "
             f"{Color.endCode}"
         )
 
-        print(f"{prefix} {levelSTR} {Color.text(color)}{message}{Color.endCode}")
+        print(f"{prefix} {level_str} {Color.text(color)}{message}{Color.endCode}")
 
-        return None
-
-    def _sendMail(self, message: str, level: str) -> None:
-        if level in self.mailLevels:
-            mailClient.sendMail(
-                emailSubject=f"TAMGA: {level} Log - {currentDate()}",
-                messageContent=message,
-                logLevel=level,
-            )
-        return None
-
-    def _writeToAPI(self, message: str, level: str) -> None:
-        import requests
-        requests.post(
-            self.apiURL,
-            json={
-                "level": level,
-                "message": message,
-                "date": currentDate(),
-                "time": currentTime(),
-                "timezone": currentTimeZone(),
-                "timestamp": currentTimeStamp(),
-            },
-        )
-        return None
-
-    def _writeToSQL(self, message: str, level: str) -> None:
+    def _write_to_sql(self, log_data: Dict[str, Any]):
         """Write log entry to SQL database."""
-        self._handleFileRotation(self.logSQL, self.maxSqlSize)
-        conn = sqlite3.connect(self.logSQL)
-        c = conn.cursor()
-        c.execute(
-            f"INSERT INTO {self.sqlTable} (level, message, date, time, timezone, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                level,
-                message,
-                currentDate(),
-                currentTime(),
-                currentTimeZone(),
-                currentTimeStamp(),
-            ),
-        )
-        conn.commit()
-        conn.close()
-        return None
+        self._handle_file_rotation(self.logSQL, self.maxSqlSize)
 
-    async def _writeToMongo(self, message: str, level: str, client) -> None:
-        if client is None:
-            await self._writeToFile(
-                "TAMGA: MongoDB client is not initialized!", "CRITICAL"
-            )
-            return None
-        await client.insert_one(
-            {
-                "level": level,
-                "message": message,
-                "date": currentDate(),
-                "time": currentTime(),
-                "timezone": currentTimeZone(),
-                "timestamp": currentTimeStamp(),
-            }
-        )
-        return None
+        try:
+            with sqlite3.connect(self.logSQL) as conn:
+                conn.execute(
+                    f"INSERT INTO {self.sqlTable} VALUES (?, ?, ?, ?, ?, ?)",
+                    (
+                        log_data["level"],
+                        log_data["message"],
+                        log_data["date"],
+                        log_data["time"],
+                        log_data["timezone"] or "",
+                        log_data["unix_timestamp"],
+                    ),
+                )
+        except Exception as e:
+            self._log_internal(f"Failed to write to SQL: {e}", "ERROR", "red")
+
+    def _send_mail_async(self, message: str, level: str):
+        """Send mail asynchronously."""
+        if not self._mail_client:
+            return
+
+        def send():
+            try:
+                self._mail_client.sendMail(
+                    emailSubject=f"TAMGA: {level} Log - {currentDate()}",
+                    messageContent=message,
+                    logLevel=level,
+                )
+            except Exception as e:
+                self._log_internal(f"Failed to send mail: {e}", "ERROR", "red")
+
+        threading.Thread(target=send, daemon=True).start()
+
+    def _write_to_api_async(self, log_data: Dict[str, Any]):
+        """Write to API asynchronously."""
+
+        def send():
+            try:
+                import requests
+
+                requests.post(
+                    self.apiURL,
+                    json={
+                        "level": log_data["level"],
+                        "message": log_data["message"],
+                        "date": log_data["date"],
+                        "time": log_data["time"],
+                        "timezone": log_data["timezone"],
+                        "timestamp": log_data["unix_timestamp"],
+                    },
+                    timeout=5,
+                )
+            except Exception as e:
+                self._log_internal(f"Failed to send to API: {e}", "ERROR", "red")
+
+        threading.Thread(target=send, daemon=True).start()
+
+    def _write_to_mongo_async(self, log_data: Dict[str, Any]):
+        """Write to MongoDB asynchronously."""
+        if not self._mongo_client:
+            return
+
+        async def write():
+            try:
+                await self._mongo_client.insert_one(
+                    {
+                        "level": log_data["level"],
+                        "message": log_data["message"],
+                        "date": log_data["date"],
+                        "time": log_data["time"],
+                        "timezone": log_data["timezone"],
+                        "timestamp": log_data["unix_timestamp"],
+                    }
+                )
+            except Exception as e:
+                self._log_internal(f"Failed to write to MongoDB: {e}", "ERROR", "red")
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                asyncio.create_task(write())
+            else:
+                loop.run_until_complete(write())
+        except RuntimeError:
+            asyncio.run(write())
+
+    def _check_file_size(self, filepath: str, max_size_mb: int) -> bool:
+        """Check if file size exceeds the maximum size limit."""
+        try:
+            return os.path.getsize(filepath) >= (max_size_mb * 1024 * 1024)
+        except OSError:
+            return False
+
+    def _create_backup(self, filepath: str):
+        """Create a backup of the file with timestamp."""
+        if not os.path.exists(filepath):
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = f"{filepath}.{timestamp}.bak"
+
+        try:
+            import shutil
+
+            shutil.copy2(filepath, backup_path)
+        except Exception as e:
+            self._log_internal(f"Failed to create backup: {e}", "ERROR", "red")
+
+    def _handle_file_rotation(self, filepath: str, max_size_mb: int):
+        """Handle file rotation when size limit is reached."""
+        if not self._check_file_size(filepath, max_size_mb):
+            return
+
+        if self.enableBackup:
+            self._create_backup(filepath)
+
+        try:
+            if filepath.endswith(".json"):
+                with open(filepath, "w", encoding="utf-8") as f:
+                    json.dump([], f)
+            elif filepath.endswith(".db"):
+                with sqlite3.connect(filepath) as conn:
+                    conn.execute(f"DELETE FROM {self.sqlTable}")
+            else:
+                open(filepath, "w", encoding="utf-8").close()
+        except Exception as e:
+            self._log_internal(f"Failed to rotate file: {e}", "ERROR", "red")
+
+    def flush(self):
+        """Flush all buffers to disk."""
+        with self._buffer_lock:
+            if self._file_buffer:
+                self._flush_file_buffer()
+            if self._json_buffer:
+                self._flush_json_buffer()
+
+    def __del__(self):
+        """Cleanup when logger is destroyed."""
+        try:
+            self.flush()
+        except Exception:
+            pass
 
     def info(self, message: str) -> None:
         self.log(message, "INFO", "sky")
@@ -374,7 +512,7 @@ class Tamga:
     def mail(self, message: str) -> None:
         self.log(message, "MAIL", "neutral")
         if not self.sendMail:
-            self.critical("TAMGA: Mail logging is not enabled!")
+            self._log_internal("Mail logging is not enabled!", "WARNING", "amber")
 
     def metric(self, message: str) -> None:
         self.log(message, "METRIC", "cyan")
@@ -386,11 +524,11 @@ class Tamga:
         self.log(message, level, color)
 
     def dir(self, message: str, **kwargs) -> None:
+        """Log message with additional key-value data."""
         if kwargs:
-            strJSON = json.dumps(kwargs, ensure_ascii=False)
-            formatted = strJSON.replace('"', "'")
-            logMessage = f"{message} | {formatted}"
+            data_str = json.dumps(kwargs, ensure_ascii=False).replace('"', "'")
+            log_message = f"{message} | {data_str}"
         else:
-            logMessage = message
+            log_message = message
 
-        self.log(logMessage, "DIR", "yellow")
+        self.log(log_message, "DIR", "yellow")
