@@ -363,7 +363,7 @@ class Tamga:
 
     def _send_mail_async(self, message: str, level: str):
         """Send mail asynchronously."""
-        if not self._mail_client:
+        if self._mail_client is None:
             return
 
         def send():
@@ -404,7 +404,7 @@ class Tamga:
 
     def _write_to_mongo_async(self, log_data: Dict[str, Any]):
         """Write to MongoDB asynchronously."""
-        if not self._mongo_client:
+        if self._mongo_client is None:
             return
 
         async def write():
