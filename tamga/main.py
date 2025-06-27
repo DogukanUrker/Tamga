@@ -209,7 +209,7 @@ class Tamga:
             "timestamp": self._format_timestamp(),
             "date": currentDate(),
             "time": currentTime(),
-            "timezone": currentTimeZone() if self.showTimezone else None,
+            "timezone": currentTimeZone(),
             "unix_timestamp": currentTimeStamp(),
         }
 
