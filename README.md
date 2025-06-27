@@ -159,6 +159,7 @@ logger.dir("User action",
 
 ### Core Parameters
 - `isColored` (bool): Enable/disable colored output (default: True)
+- `showTimezone` (bool): Include timezone in timestamps (default: False)
 - `logToConsole` (bool): Log to console (default: True)
 - `logToFile` (bool): Log to file (default: False)
 - `logToJSON` (bool): Log to JSON file (default: False)
@@ -169,7 +170,6 @@ logger.dir("User action",
 
 ### Performance Parameters
 - `bufferSize` (int): Number of logs to buffer before writing (default: 50)
-- `showTimezone` (bool): Include timezone in timestamps (default: False)
 
 ### File Management
 - `logFile` (str): Path to log file (default: "tamga.log")
