@@ -39,8 +39,8 @@ logger.success("Operation completed")
 
 ### Cleaner Timestamps
 ```python
-# Remove timezone for cleaner logs
-logger = Tamga(showTimezone=False)
+# Timezone is disabled by default for cleaner logs
+logger = Tamga()  # showTimezone=False is the default
 logger.info("Clean timestamp!")
 # Output: [27.01.25 | 14:30:52]  INFO  Clean timestamp!
 ```
@@ -51,10 +51,10 @@ logger.info("Clean timestamp!")
 logger = Tamga(
     logToFile=True,
     bufferSize=200,  # Buffer 200 logs before writing
-    showTimezone=False
+    showTimezone=False  # Clean timestamps without timezone
 )
 
-# Intensive logging is now much faster
+# Intensive logging is much faster
 for i in range(10000):
     logger.info(f"Log entry {i}")
 
@@ -88,9 +88,9 @@ logger = Tamga(
     logJSON="logs/app.json",
     logSQL="logs/app.db",
 
-    # Performance settings (new in v0.2.0)
+    # Performance settings
     bufferSize=50,
-    showTimezone=True,
+    showTimezone=True,  # Explicitly enable timezone for production logs
 
     # Rotation settings
     maxLogSize=10,  # MB
@@ -157,7 +157,7 @@ pip install tamga[full]
 - `logToMongo` (bool): Log to MongoDB (default: False)
 - `logToAPI` (bool): Log to external API (default: False)
 - `sendMail` (bool): Send email notifications (default: False)
-- `showTimezone` (bool): Show timezone in timestamps (default: True)
+- `showTimezone` (bool): Show timezone in timestamps (default: False)
 
 ### Performance Parameters
 - `bufferSize` (int): Number of logs to buffer before writing to disk (default: 50)
@@ -475,7 +475,7 @@ from fastapi import FastAPI, Request
 from tamga import Tamga
 
 app = FastAPI()
-logger = Tamga(logToJSON=True, showTimezone=False)
+logger = Tamga(logToJSON=True)  # showTimezone=False is default
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):

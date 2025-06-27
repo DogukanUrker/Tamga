@@ -29,7 +29,7 @@ class Tamga:
         logToSQL: bool = False,
         logToAPI: bool = False,
         sendMail: bool = False,
-        showTimezone: bool = True,
+        showTimezone: bool = False,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
         mongoCollectionName: str = "logs",
@@ -79,7 +79,7 @@ class Tamga:
             maxJsonSize: Maximum size in MB for JSON file (default: 10)
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
             enableBackup: Enable backup when max size is reached (default: True)
-            showTimezone: Show timezone in logs (default: True)
+            showTimezone: Show timezone in logs (default: False)
             bufferSize: Number of logs to buffer before writing to file (default: 50)
         """
         self.isColored = isColored
