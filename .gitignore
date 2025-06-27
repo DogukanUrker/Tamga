@@ -168,3 +168,5 @@ tamga.json
 
 # Ignore .db file for tamga
 tamga.db
+
+local.py
