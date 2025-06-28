@@ -392,7 +392,7 @@ class Tamga:
         if not self.isColored:
             timestamp = self._format_timestamp()
             if timestamp:
-                print(f"[{timestamp}]  {level:<{self.maxLevelWidth}}  {message}")
+                print(f"[ {timestamp} ]  {level:<{self.maxLevelWidth}}  {message}")
             else:
                 print(f"{level:<{self.maxLevelWidth}}  {message}")
             return
