@@ -19,6 +19,49 @@ class Tamga:
 
     LOG_LEVELS = LOG_LEVELS
 
+    __slots__ = [
+        "isColored",
+        "logToFile",
+        "logToJSON",
+        "logToConsole",
+        "logToMongo",
+        "logToSQL",
+        "logToAPI",
+        "sendMail",
+        "showDay",
+        "showTime",
+        "showTimezone",
+        "mongoURI",
+        "mongoDatabaseName",
+        "mongoCollectionName",
+        "logFile",
+        "logJSON",
+        "logSQL",
+        "sqlTable",
+        "smtpServer",
+        "smtpPort",
+        "smtpMail",
+        "smtpPassword",
+        "smtpReceivers",
+        "mailLevels",
+        "apiURL",
+        "maxLogSize",
+        "maxJsonSize",
+        "maxSqlSize",
+        "enableBackup",
+        "bufferSize",
+        "maxLevelWidth",
+        "_mongo_client",
+        "_mail_client",
+        "_file_buffer",
+        "_json_buffer",
+        "_buffer_lock",
+        "_color_cache",
+        "_requests_module",
+        "_json_file_handle",
+        "_log_file_handle",
+    ]
+
     def __init__(
         self,
         isColored: bool = True,
@@ -56,6 +99,7 @@ class Tamga:
         Initialize Tamga with optional features.
 
         Args:
+            isColored: Enable colored console output (default: True)
             logToFile: Enable logging to a file (default: False)
             logToJSON: Enable logging to a JSON file (default: False)
             logToConsole: Enable logging to console (default: True)
@@ -124,6 +168,11 @@ class Tamga:
         self._json_buffer = []
         self._buffer_lock = threading.Lock()
 
+        self._color_cache = {}
+        self._requests_module = None
+        self._json_file_handle = None
+        self._log_file_handle = None
+
         self._init_services()
 
     def _init_services(self):
@@ -136,6 +185,12 @@ class Tamga:
 
         if self.logToFile:
             self._ensure_file_exists(self.logFile)
+            try:
+                self._log_file_handle = open(
+                    self.logFile, "a", encoding="utf-8", buffering=8192
+                )
+            except Exception:
+                pass
 
         if self.logToJSON:
             self._init_json_file()
@@ -266,12 +321,20 @@ class Tamga:
         self._handle_file_rotation(self.logFile, self.maxLogSize)
 
         try:
-            with open(self.logFile, "a", encoding="utf-8") as f:
+            if self._log_file_handle and not self._log_file_handle.closed:
                 for log_data in self._file_buffer:
                     file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
-                    f.write(
+                    self._log_file_handle.write(
                         f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
                     )
+                self._log_file_handle.flush()
+            else:
+                with open(self.logFile, "a", encoding="utf-8") as f:
+                    for log_data in self._file_buffer:
+                        file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
+                        f.write(
+                            f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
+                        )
             self._file_buffer.clear()
         except Exception as e:
             self._log_internal(f"Failed to write to file: {e}", "ERROR", "red")
@@ -306,6 +369,7 @@ class Tamga:
                             "timestamp": log["unix_timestamp"],
                         },
                         ensure_ascii=False,
+                        separators=(",", ":"),
                     )
                     for log in self._json_buffer
                 ]
@@ -317,6 +381,12 @@ class Tamga:
         except Exception as e:
             self._log_internal(f"Failed to write to JSON: {e}", "ERROR", "red")
 
+    def _get_color_codes(self, color: str) -> tuple:
+        """Get cached color codes for performance."""
+        if color not in self._color_cache:
+            self._color_cache[color] = (Color.text(color), Color.background(color))
+        return self._color_cache[color]
+
     def _write_to_console(self, message: str, level: str, color: str):
         """Write formatted log entry to console."""
         if not self.isColored:
@@ -327,10 +397,12 @@ class Tamga:
                 print(f"{level:<{self.maxLevelWidth}}  {message}")
             return
 
-        prefix_parts = []
+        text_color, bg_color = self._get_color_codes(color)
+
+        output_parts = []
 
         if self.showDay or self.showTime or self.showTimezone:
-            prefix_parts.append(f"{Color.text('gray')}[{Color.endCode}")
+            output_parts.append(f"{Color.text('gray')}[{Color.endCode}")
 
             content_parts = []
 
@@ -351,23 +423,21 @@ class Tamga:
 
             if content_parts:
                 separator = f"{Color.text('gray')} | {Color.endCode}"
-                prefix_parts.append(separator.join(content_parts))
+                output_parts.append(separator.join(content_parts))
 
-            prefix_parts.append(f"{Color.text('gray')}]{Color.endCode}")
-
-        prefix = " ".join(prefix_parts)
+            output_parts.append(f"{Color.text('gray')}]{Color.endCode}")
 
         level_str = (
-            f"{Color.background(color)}"
+            f"{bg_color}"
             f"{Color.style('bold')}"
             f" {level:<{self.maxLevelWidth}} "
             f"{Color.endCode}"
         )
 
-        if prefix:
-            print(f"{prefix} {level_str} {Color.text(color)}{message}{Color.endCode}")
-        else:
-            print(f"{level_str} {Color.text(color)}{message}{Color.endCode}")
+        output_parts.append(level_str)
+        output_parts.append(f"{text_color}{message}{Color.endCode}")
+
+        print(" ".join(output_parts))
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
         """Write log entry to SQL database."""
@@ -408,12 +478,17 @@ class Tamga:
 
     def _write_to_api_async(self, log_data: Dict[str, Any]):
         """Write to API asynchronously."""
-
-        def send():
+        if self._requests_module is None:
             try:
                 import requests
 
-                requests.post(
+                self._requests_module = requests
+            except ImportError:
+                return
+
+        def send():
+            try:
+                self._requests_module.post(
                     self.apiURL,
                     json={
                         "level": log_data["level"],
@@ -486,6 +561,10 @@ class Tamga:
         if not self._check_file_size(filepath, max_size_mb):
             return
 
+        if filepath == self.logFile and self._log_file_handle:
+            self._log_file_handle.close()
+            self._log_file_handle = None
+
         if self.enableBackup:
             self._create_backup(filepath)
 
@@ -498,6 +577,11 @@ class Tamga:
                     conn.execute(f"DELETE FROM {self.sqlTable}")
             else:
                 open(filepath, "w", encoding="utf-8").close()
+
+            if filepath == self.logFile:
+                self._log_file_handle = open(
+                    self.logFile, "a", encoding="utf-8", buffering=8192
+                )
         except Exception as e:
             self._log_internal(f"Failed to rotate file: {e}", "ERROR", "red")
 
@@ -513,6 +597,8 @@ class Tamga:
         """Cleanup when logger is destroyed."""
         try:
             self.flush()
+            if self._log_file_handle and not self._log_file_handle.closed:
+                self._log_file_handle.close()
         except Exception:
             pass
 
@@ -554,7 +640,9 @@ class Tamga:
     def dir(self, message: str, **kwargs) -> None:
         """Log message with additional key-value data."""
         if kwargs:
-            data_str = json.dumps(kwargs, ensure_ascii=False).replace('"', "'")
+            data_str = json.dumps(
+                kwargs, ensure_ascii=False, separators=(",", ":")
+            ).replace('"', "'")
             log_message = f"{message} | {data_str}"
         else:
             log_message = message
