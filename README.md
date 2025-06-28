@@ -4,228 +4,153 @@ A modern, high-performance logging utility for Python with multiple output forma
 
 [![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
 
-tam·ga / noun
-An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
+**🤖 AI Integration:** For AI/LLM integration, see [llms.txt](https://raw.githubusercontent.com/DogukanUrker/Tamga/refs/heads/main/llms.txt) or access documentation directly via [Context7](https://context7.com/dogukanurker/tamga)
+
+> **tam·ga** */ˈtæmɡə/* · noun
+> An ancient Turkic symbol or seal used for marking ownership, identity, or lineage.
 
 <img alt="Terminal" src="https://github.com/DogukanUrker/Tamga/blob/main/Images/terminal.png?raw=true" />
 
-**AI Integration:** For AI/LLM integration, see [LLMs.txt](https://raw.githubusercontent.com/DogukanUrker/Tamga/refs/heads/main/llms.txt) or access documentation directly via [Context7](https://context7.com/dogukanurker/tamga)
+## ✨ Features
 
-## Features
+- 🎨 **Beautiful Console Output** - Colorful, formatted logs using Tailwind CSS colors
+- ⚡ **High Performance** - Buffered writing system (10x faster than traditional logging)
+- 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB, API, and email
+- 🔄 **Automatic Rotation** - File size management with backup support
+- 🧵 **Thread-Safe** - Safe for multi-threaded applications
+- 📧 **Email Alerts** - SMTP integration for critical notifications
+- 🔍 **Structured Logging** - Key-value data support with `dir()` method
 
-- 🎨 Colorful console output using Tailwind CSS color palette
-- ⚡ High-performance buffered writing (10x faster than traditional logging)
-- 📁 File logging with rotation and backup
-- 📊 JSON logging with optimized performance
-- 🗄️ SQLite database logging
-- 🚀 MongoDB integration with async support
-- 📧 Email notifications for specific log levels
-- 🌐 API logging support
-- 🔄 Automatic file rotation and backup
-- 🎯 Multiple log levels with customizable colors
-- 🕒 Customizable timestamp display (day, time, timezone)
-- 💾 Manual flush control for critical messages
-
-## Installation
-
-To install the `tamga` package, you can use the following commands based on your requirements:
-
-- Basic installation:
-
-  ```bash
-  pip install tamga
-  ```
-
-- With API logging support:
-
-  ```bash
-  pip install tamga[api]
-  ```
-
-- With MongoDB integration:
-
-  ```bash
-  pip install tamga[mongo]
-  ```
-
-- Full installation with all features:
-  ```bash
-  pip install tamga[full]
-  ```
-
-## Quick Start
+## 🚀 Quick Start
 
 ```python
 from tamga import Tamga
 
-# Initialize the logger
-logger = Tamga(
-    logToFile=True,
-    logToJSON=True,
-    logToConsole=True
-)
+# Create logger with default settings
+logger = Tamga()
 
-# Basic logging
-logger.info("This is an info message")
-logger.warning("This is a warning")
-logger.error("This is an error")
-logger.success("This is a success message")
-logger.debug("This is a debug message")
-logger.critical("This is a critical message")
-
-# Custom logging
-logger.custom("This is a custom message", "CUSTOM", "orange")
+# Log messages
+logger.info("Application started")
+logger.warning("Memory usage at 85%")
+logger.error("Failed to connect to API")
+logger.success("User registered successfully")
+logger.debug("Cache initialized with 1000 entries")
 ```
 
-## Advanced Usage
+## 📦 Installation
 
-### Performance Optimization
-
-```python
-# High-performance logging with buffering
-logger = Tamga(
-    logToFile=True,
-    bufferSize=200,  # Buffer 200 logs before writing to disk
-    showDay=False,   # Hide day for cleaner console output
-    showTime=True,   # Keep time for debugging
-    showTimezone=False  # Minimal timestamps for performance
-)
-
-# Process large amounts of data
-for record in large_dataset:
-    logger.info(f"Processing {record.id}")
-
-# Ensure all logs are written
-logger.flush()
+```bash
+pip install tamga              # Basic installation
+pip install tamga[mongo]       # With MongoDB support
+pip install tamga[api]         # With API logging support
+pip install tamga[full]        # All features
 ```
 
-### MongoDB Integration
+## 🎯 Usage Examples
 
+### Basic Configuration
 ```python
 logger = Tamga(
-    logToMongo=True,
-    mongoURI="your_mongodb_uri",
-    mongoDatabaseName="logs_db",
-    mongoCollectionName="application_logs"
-)
-```
+    # Display settings
+    isColored=True,        # Colored output
+    showTime=True,         # Include timestamp
+    showTimezone=False,    # Include timezone
 
-### Email Notifications
-
-```python
-logger = Tamga(
-    sendMail=True,
-    smtpServer="smtp.gmail.com",
-    smtpPort=587,
-    smtpMail="your_email@gmail.com",
-    smtpPassword="your_password",
-    smtpReceivers=["receiver@email.com"],
-    mailLevels=["CRITICAL", "ERROR"]
-)
-```
-
-### File Rotation and Backup
-
-```python
-logger = Tamga(
-    logToFile=True,
-    logToJSON=True,
-    maxLogSize=10,  # MB
-    maxJsonSize=10,  # MB
-    enableBackup=True
-)
-```
-
-### API Integration
-
-```python
-logger = Tamga(
-    logToAPI=True,
-    apiURL="http://your-api.com/logs"
+    # Output destinations
+    logToFile=True,        # Log to file
+    logFile="app.log",     # Log file path
+    bufferSize=50,         # Buffer size for performance
 )
 ```
 
 ### Structured Logging
-
 ```python
-# Log with additional context
+# Log with key-value data
 logger.dir("User action",
-    user_id="12345",
+    user_id="123",
     action="login",
     ip_address="192.168.1.1",
     success=True
 )
 ```
 
-## Configuration Options
+### Production Setup
+```python
+logger = Tamga(
+    # File rotation
+    logToFile=True,
+    maxLogSize=50,         # 50MB max file size
+    enableBackup=True,     # Create backups
 
-### Core Parameters
-- `isColored` (bool): Enable/disable colored output (default: True)
-- `showDay` (bool): Show day in console timestamps (default: True)
-- `showTime` (bool): Show time in console timestamps (default: True)
-- `showTimezone` (bool): Show timezone in console timestamps (default: False)
-- `logToConsole` (bool): Log to console (default: True)
-- `logToFile` (bool): Log to file (default: False)
-- `logToJSON` (bool): Log to JSON file (default: False)
-- `logToSQL` (bool): Log to SQLite database (default: False)
-- `logToMongo` (bool): Log to MongoDB (default: False)
-- `logToAPI` (bool): Log to external API (default: False)
-- `sendMail` (bool): Send email notifications (default: False)
+    # Performance
+    bufferSize=200,        # Larger buffer for production
+    logToConsole=False,    # Disable console for speed
 
-### Performance Parameters
-- `bufferSize` (int): Number of logs to buffer before writing (default: 50)
+    # External services
+    logToMongo=True,
+    mongoURI="mongodb://...",
 
-### File Management
-- `logFile` (str): Path to log file (default: "tamga.log")
-- `logJSON` (str): Path to JSON file (default: "tamga.json")
-- `logSQL` (str): Path to SQLite database (default: "tamga.db")
-- `maxLogSize` (int): Max file size in MB before rotation (default: 10)
-- `maxJsonSize` (int): Max JSON size in MB (default: 10)
-- `maxSqlSize` (int): Max SQL size in MB (default: 50)
-- `enableBackup` (bool): Create backups on rotation (default: True)
+    # Email alerts
+    sendMail=True,
+    smtpServer="smtp.gmail.com",
+    smtpPort=587,
+    mailLevels=["CRITICAL", "ERROR"],
+)
+```
 
-## Available Log Levels
+## 📋 Log Levels
 
-- INFO (sky blue)
-- WARNING (amber)
-- ERROR (rose)
-- SUCCESS (emerald)
-- DEBUG (indigo)
-- CRITICAL (red)
-- DATABASE (green)
-- MAIL (neutral)
-- METRIC (cyan)
-- TRACE (gray)
-- Custom (user-defined)
+| Level | Color | Method | Use Case |
+|-------|-------|---------|----------|
+| INFO | Sky | `logger.info()` | General information |
+| WARNING | Amber | `logger.warning()` | Warning messages |
+| ERROR | Rose | `logger.error()` | Error messages |
+| SUCCESS | Emerald | `logger.success()` | Success messages |
+| DEBUG | Indigo | `logger.debug()` | Debug information |
+| CRITICAL | Red | `logger.critical()` | Critical issues |
+| CUSTOM | Any | `logger.custom()` | Custom levels |
 
-## Performance Tips
+## 🔧 Advanced Features
 
-1. **Buffer Size**: Adjust based on your needs
-   - Interactive apps: `bufferSize=1-10`
-   - Web services: `bufferSize=50-100`
-   - Batch processing: `bufferSize=200-1000`
+### Custom Log Levels
+```python
+logger.custom("Deploy completed", "DEPLOY", "purple")
+logger.custom("Payment received", "PAYMENT", "green")
+```
 
-2. **Critical Logs**: Use `flush()` after important messages
-   ```python
-   logger.critical("System failure")
-   logger.flush()  # Ensure immediate write
-   ```
+### Buffer Control
+```python
+# Force write all buffered logs
+logger.flush()
+```
 
-3. **High Throughput**: Disable console for maximum speed
-   ```python
-   logger = Tamga(logToConsole=False, logToFile=True, bufferSize=500)
-   ```
+### File Rotation
+When log files reach `maxLogSize`, Tamga automatically:
+- Creates timestamped backups (if enabled)
+- Clears the original file
+- Continues logging seamlessly
 
-## Contributing
+## 📊 Performance
+
+Tamga uses a buffered writing system that delivers significantly faster performance compared to traditional logging. The buffering mechanism provides optimal throughput for high-volume logging scenarios while maintaining thread safety.
+
+## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Author
+## 🔗 Links
 
-- Doğukan Ürker
-- Email: dogukanurker@icloud.com
-- GitHub: [@dogukanurker](https://github.com/dogukanurker)
+- [PyPI Package](https://pypi.org/project/tamga/)
+- [GitHub Repository](https://github.com/DogukanUrker/Tamga)
+- [Documentation](https://tamga.vercel.app/)
+- [Bug Reports](https://github.com/DogukanUrker/Tamga/issues)
+
+---
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/DogukanUrker">Doğukan Ürker</a>
+</p>
