@@ -1,0 +1,3 @@
+"""
+Tamga test suite
+"""
