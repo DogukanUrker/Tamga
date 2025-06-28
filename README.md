@@ -23,7 +23,7 @@ An ancient Turkic symbol or seal used for marking ownership, identity, or lineag
 - 🌐 API logging support
 - 🔄 Automatic file rotation and backup
 - 🎯 Multiple log levels with customizable colors
-- 🕒 Optional timezone in timestamps
+- 🕒 Customizable timestamp display (day, time, timezone)
 - 💾 Manual flush control for critical messages
 
 ## Installation
@@ -86,7 +86,9 @@ logger.custom("This is a custom message", "CUSTOM", "orange")
 logger = Tamga(
     logToFile=True,
     bufferSize=200,  # Buffer 200 logs before writing to disk
-    showTimezone=False  # Cleaner timestamps without timezone
+    showDay=False,   # Hide day for cleaner console output
+    showTime=True,   # Keep time for debugging
+    showTimezone=False  # Minimal timestamps for performance
 )
 
 # Process large amounts of data
@@ -159,7 +161,9 @@ logger.dir("User action",
 
 ### Core Parameters
 - `isColored` (bool): Enable/disable colored output (default: True)
-- `showTimezone` (bool): Include timezone in timestamps (default: False)
+- `showDay` (bool): Show day in console timestamps (default: True)
+- `showTime` (bool): Show time in console timestamps (default: True)
+- `showTimezone` (bool): Show timezone in console timestamps (default: False)
 - `logToConsole` (bool): Log to console (default: True)
 - `logToFile` (bool): Log to file (default: False)
 - `logToJSON` (bool): Log to JSON file (default: False)

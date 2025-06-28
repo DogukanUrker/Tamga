@@ -37,12 +37,27 @@ logger.error("Failed to connect")
 logger.success("Operation completed")
 ```
 
-### Cleaner Timestamps
+### Customizable Timestamps
 ```python
-# Timezone is disabled by default for cleaner logs
-logger = Tamga()  # showTimezone=False is the default
-logger.info("Clean timestamp!")
-# Output: [27.01.25 | 14:30:52]  INFO  Clean timestamp!
+# Full timestamp (default behavior)
+logger = Tamga()  # showDay=True, showTime=True, showTimezone=False
+logger.info("Full timestamp!")
+# Output: [27.01.25 | 14:30:52]  INFO  Full timestamp!
+
+# Minimal timestamps
+logger = Tamga(showDay=False, showTime=True, showTimezone=False)
+logger.info("Time only!")
+# Output: [14:30:52]  INFO  Time only!
+
+# Date only
+logger = Tamga(showDay=True, showTime=False, showTimezone=False)
+logger.info("Date only!")
+# Output: [27.01.25]  INFO  Date only!
+
+# No timestamp in console (still logged to files)
+logger = Tamga(showDay=False, showTime=False, showTimezone=False)
+logger.info("No timestamp!")
+# Output: INFO  No timestamp!
 ```
 
 ### High-Performance Logging
@@ -51,6 +66,8 @@ logger.info("Clean timestamp!")
 logger = Tamga(
     logToFile=True,
     bufferSize=200,  # Buffer 200 logs before writing
+    showTime=True,   # Show time for debugging
+    showDay=False,   # Hide day for cleaner output
     showTimezone=False  # Clean timestamps without timezone
 )
 
@@ -90,7 +107,9 @@ logger = Tamga(
 
     # Performance settings
     bufferSize=50,
-    showTimezone=True,  # Explicitly enable timezone for production logs
+    showDay=True,       # Include day for audit trail
+    showTime=True,      # Include time for debugging
+    showTimezone=True,  # Include timezone for production logs
 
     # Rotation settings
     maxLogSize=10,  # MB
@@ -157,7 +176,9 @@ pip install tamga[full]
 - `logToMongo` (bool): Log to MongoDB (default: False)
 - `logToAPI` (bool): Log to external API (default: False)
 - `sendMail` (bool): Send email notifications (default: False)
-- `showTimezone` (bool): Show timezone in timestamps (default: False)
+- `showDay` (bool): Show day in console timestamps (default: True)
+- `showTime` (bool): Show time in console timestamps (default: True)
+- `showTimezone` (bool): Show timezone in console timestamps (default: False)
 
 ### Performance Parameters
 - `bufferSize` (int): Number of logs to buffer before writing to disk (default: 50)
@@ -229,6 +250,8 @@ logger = Tamga(
     logToFile=True,
     logToConsole=False,  # Disable console for speed
     bufferSize=500,      # Large buffer for batch writes
+    showDay=False,       # Minimal console output if enabled
+    showTime=True,       # Keep time for debugging
     showTimezone=False,  # Simpler timestamps
     maxLogSize=100       # Reduce rotation frequency
 )
@@ -337,7 +360,9 @@ logger = Tamga(
     logToConsole=True,
     logToFile=True,
     logFile="dev.log",
-    showTimezone=False  # Cleaner for development
+    showDay=False,       # Cleaner for development
+    showTime=True,       # Time is useful for debugging
+    showTimezone=False   # No timezone needed locally
 )
 ```
 
@@ -522,7 +547,9 @@ logger = Tamga(
     smtpPassword=os.getenv("SMTP_PASSWORD"),
     apiURL=os.getenv("LOG_API_URL"),
     bufferSize=int(os.getenv("LOG_BUFFER_SIZE", 10)),
-    showTimezone=os.getenv("LOG_TIMEZONE", "true").lower() == "true"
+    showDay=os.getenv("LOG_SHOW_DAY", "true").lower() == "true",
+    showTime=os.getenv("LOG_SHOW_TIME", "true").lower() == "true",
+    showTimezone=os.getenv("LOG_TIMEZONE", "false").lower() == "true"
 )
 ```
 

@@ -29,6 +29,8 @@ class Tamga:
         logToSQL: bool = False,
         logToAPI: bool = False,
         sendMail: bool = False,
+        showDay: bool = True,
+        showTime: bool = True,
         showTimezone: bool = False,
         mongoURI: str = None,
         mongoDatabaseName: str = "tamga",
@@ -61,6 +63,9 @@ class Tamga:
             logToSQL: Enable logging to SQL database (default: False)
             logToAPI: Enable logging to an API (default: False)
             sendMail: Enable sending logs via email (default: False)
+            showDay: Show day in console logs (default: True)
+            showTime: Show time in console logs (default: True)
+            showTimezone: Show timezone in console logs (default: False)
             mongoURI: MongoDB connection URI
             mongoDatabaseName: MongoDB database name (default: "tamga")
             mongoCollectionName: MongoDB collection name (default: "logs")
@@ -79,7 +84,6 @@ class Tamga:
             maxJsonSize: Maximum size in MB for JSON file (default: 10)
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
             enableBackup: Enable backup when max size is reached (default: True)
-            showTimezone: Show timezone in logs (default: False)
             bufferSize: Number of logs to buffer before writing to file (default: 50)
         """
         self.isColored = isColored
@@ -90,6 +94,8 @@ class Tamga:
         self.logToSQL = logToSQL
         self.logToAPI = logToAPI
         self.sendMail = sendMail
+        self.showDay = showDay
+        self.showTime = showTime
         self.showTimezone = showTimezone
         self.mongoURI = mongoURI
         self.mongoDatabaseName = mongoDatabaseName
@@ -187,10 +193,14 @@ class Tamga:
 
     def _format_timestamp(self) -> str:
         """Format timestamp string based on settings."""
-        parts = [currentDate(), currentTime()]
+        parts = []
+        if self.showDay:
+            parts.append(currentDate())
+        if self.showTime:
+            parts.append(currentTime())
         if self.showTimezone:
             parts.append(currentTimeZone())
-        return " | ".join(parts)
+        return " | ".join(parts) if parts else ""
 
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
@@ -258,8 +268,9 @@ class Tamga:
         try:
             with open(self.logFile, "a", encoding="utf-8") as f:
                 for log_data in self._file_buffer:
+                    file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                     f.write(
-                        f"[{log_data['timestamp']}] {log_data['level']}: {log_data['message']}\n"
+                        f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
                     )
             self._file_buffer.clear()
         except Exception as e:
@@ -309,27 +320,41 @@ class Tamga:
     def _write_to_console(self, message: str, level: str, color: str):
         """Write formatted log entry to console."""
         if not self.isColored:
-            print(
-                f"[{self._format_timestamp()}]  {level:<{self.maxLevelWidth}}  {message}"
-            )
+            timestamp = self._format_timestamp()
+            if timestamp:
+                print(f"[{timestamp}]  {level:<{self.maxLevelWidth}}  {message}")
+            else:
+                print(f"{level:<{self.maxLevelWidth}}  {message}")
             return
 
-        prefix_parts = [
-            f"{Color.text('gray')}[{Color.endCode}",
-            f"{Color.text('indigo')}{currentDate()}{Color.endCode}",
-            f"{Color.text('gray')}|{Color.endCode}",
-            f"{Color.text('violet')}{currentTime()}{Color.endCode}",
-        ]
+        prefix_parts = []
 
-        if self.showTimezone:
-            prefix_parts.extend(
-                [
-                    f"{Color.text('gray')}|{Color.endCode}",
-                    f"{Color.text('purple')}{currentTimeZone()}{Color.endCode}",
-                ]
-            )
+        if self.showDay or self.showTime or self.showTimezone:
+            prefix_parts.append(f"{Color.text('gray')}[{Color.endCode}")
 
-        prefix_parts.append(f"{Color.text('gray')}]{Color.endCode}")
+            content_parts = []
+
+            if self.showDay:
+                content_parts.append(
+                    f"{Color.text('indigo')}{currentDate()}{Color.endCode}"
+                )
+
+            if self.showTime:
+                content_parts.append(
+                    f"{Color.text('violet')}{currentTime()}{Color.endCode}"
+                )
+
+            if self.showTimezone:
+                content_parts.append(
+                    f"{Color.text('purple')}{currentTimeZone()}{Color.endCode}"
+                )
+
+            if content_parts:
+                separator = f"{Color.text('gray')} | {Color.endCode}"
+                prefix_parts.append(separator.join(content_parts))
+
+            prefix_parts.append(f"{Color.text('gray')}]{Color.endCode}")
+
         prefix = " ".join(prefix_parts)
 
         level_str = (
@@ -339,7 +364,10 @@ class Tamga:
             f"{Color.endCode}"
         )
 
-        print(f"{prefix} {level_str} {Color.text(color)}{message}{Color.endCode}")
+        if prefix:
+            print(f"{prefix} {level_str} {Color.text(color)}{message}{Color.endCode}")
+        else:
+            print(f"{level_str} {Color.text(color)}{message}{Color.endCode}")
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
         """Write log entry to SQL database."""
