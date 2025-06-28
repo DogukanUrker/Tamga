@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: 🚀 Publish to PyPI
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-and-publish:
+    name: 📦 Build & Publish Package
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -16,19 +17,25 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Install uv
+      - name: ⚡ Install uv
         uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         run: uv python install
 
-      - name: Build package
+      - name: 🔨 Build package
         run: uv build --no-sources
 
-      - name: Publish to PyPI
+      - name: 🚀 Publish to PyPI
         run: uv publish
+
+      - name: 📊 Publish summary
+        if: always()
+        run: |
+          echo "### 🚀 Package Published Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "Package **tamga** has been published to PyPI from tag: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
