@@ -1,3 +1,0 @@
-"""
-Tamga test suite
-"""
