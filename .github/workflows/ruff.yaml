@@ -3,8 +3,16 @@ name: 🐍 Code Quality (Ruff)
 on:
   push:
     branches: [main]
+    paths:
+      - "**.py"
+      - "pyproject.toml"
+      - ".github/workflows/ruff.yaml"
   pull_request:
     branches: [main]
+    paths:
+      - "**.py"
+      - "pyproject.toml"
+      - ".github/workflows/ruff.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
