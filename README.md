@@ -108,7 +108,14 @@ logger = Tamga(
 | SUCCESS | Emerald | `logger.success()` | Success messages |
 | DEBUG | Indigo | `logger.debug()` | Debug information |
 | CRITICAL | Red | `logger.critical()` | Critical issues |
+| DATABASE | Green | `logger.database()` | Database operations |
+| MAIL | Neutral | `logger.mail()` | Email notifications* |
+| METRIC | Cyan | `logger.metric()` | Performance metrics |
+| TRACE | Gray | `logger.trace()` | Detailed trace info |
+| DIR | Yellow | `logger.dir()` | Structured key-value data |
 | CUSTOM | Any | `logger.custom()` | Custom levels |
+
+*Note: `mail()` method triggers email notifications when `sendMail=True`
 
 ## 🔧 Advanced Features
 
