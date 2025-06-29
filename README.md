@@ -23,6 +23,8 @@ A modern, high-performance logging utility for Python with multiple output forma
 
 ## 🚀 Quick Start
 
+See [`examples/simple_usage.py`](./examples/simple_usage.py) for a full script.
+
 ```python
 from tamga import Tamga
 
@@ -36,6 +38,16 @@ logger.error("Failed to connect to API")
 logger.success("User registered successfully")
 logger.debug("Cache initialized with 1000 entries")
 ```
+
+## 🧑‍💻 Examples
+
+See [`examples/`](./examples) for ready-to-run scripts:
+
+- `simple_usage.py` — basic logging
+- `fastapi_webapp.py` — FastAPI integration
+- `advanced_config.py` — production config
+- `high_performance.py` — high-speed big data logging demo
+
 
 ## 📦 Installation
 
