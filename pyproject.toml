@@ -1,6 +1,6 @@
 [project]
 name = "tamga"
-version = "1.1.1"
+version = "1.2.0"
 authors = [{ name = "Doğukan Ürker", email = "dogukanurker@icloud.com" }]
 description = "A modern, high-performance async logging utility with multiple output formats and colorful console output"
 readme = "README.md"
@@ -15,7 +15,8 @@ keywords = [
     "file",
     "json",
     "sql",
-    "email",
+    "notifications",
+    "apprise",
     "performance",
     "buffered",
 ]
@@ -39,8 +40,8 @@ dependencies = []
 
 [project.optional-dependencies]
 mongo = ["pymongo<4.9", "motor<3.6"]
-api = ["requests>=2.31.0"]
-full = ["pymongo<4.9", "motor<3.6", "requests>=2.31.0"]
+notifications = ["apprise>=1.9.3"]
+all = ["pymongo<4.9", "motor<3.6", "apprise>=1.9.3"]
 
 [project.urls]
 Homepage = "https://tamga.vercel.app/"

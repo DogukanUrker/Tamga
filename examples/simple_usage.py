@@ -5,6 +5,12 @@ from tamga import Tamga
 # Create a logger with default settings
 logger = Tamga()
 
+# Optional: Add notifications (requires pip install tamga[notifications])
+# logger = Tamga(
+#     notifyServices=["discord://webhook_id/webhook_token"],
+#     notifyLevels=["CRITICAL", "ERROR"]
+# )
+
 # Log messages at various levels
 logger.info("Application started")
 logger.success("User registration successful")

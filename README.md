@@ -15,10 +15,10 @@ A modern, high-performance logging utility for Python with multiple output forma
 
 - 🎨 **Beautiful Console Output** - Colorful, formatted logs using Tailwind CSS colors
 - ⚡ **High Performance** - Buffered writing system (10x faster than traditional logging)
-- 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB, API, and email
+- 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB, and notifications
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
-- 📧 **Email Alerts** - SMTP integration for critical notifications
+- 📱 **80+ Notification Services** - Discord, Slack, Telegram, SMS, Email, and more via Apprise
 - 🔍 **Structured Logging** - Key-value data support with `dir()` method
 
 ## 🚀 Quick Start
@@ -44,6 +44,7 @@ logger.debug("Cache initialized with 1000 entries")
 See [`examples/`](./examples) for ready-to-run scripts:
 
 - `simple_usage.py` — basic logging
+- `notifications.py` — 80+ notification services showcase
 - `fastapi_webapp.py` — FastAPI integration
 - `advanced_config.py` — production config
 - `high_performance.py` — high-speed big data logging demo
@@ -52,10 +53,11 @@ See [`examples/`](./examples) for ready-to-run scripts:
 ## 📦 Installation
 
 ```bash
-pip install tamga              # Basic installation
-pip install tamga[mongo]       # With MongoDB support
-pip install tamga[api]         # With API logging support
-pip install tamga[full]        # All features
+pip install tamga                    # Basic installation
+pip install tamga[mongo]             # With MongoDB support
+pip install tamga[all]               # With all optional dependencies
+pip install tamga[notifications]     # With 80+ notification services
+pip install tamga[full]              # All features
 ```
 
 ## 🎯 Usage Examples
@@ -102,11 +104,15 @@ logger = Tamga(
     logToMongo=True,
     mongoURI="mongodb://...",
 
-    # Email alerts
-    sendMail=True,
-    smtpServer="smtp.gmail.com",
-    smtpPort=587,
-    mailLevels=["CRITICAL", "ERROR"],
+    # Multi-service notifications (80+ services supported!)
+    notifyServices=[
+        "discord://webhook_id/webhook_token",      # Discord
+        "slack://tokenA/tokenB/tokenC/#alerts",    # Slack
+        "mailto://alerts@company.com",             # Email
+        "twilio://SID:Token@+1234567890/+0987654321"  # SMS
+    ],
+    notifyLevels=["CRITICAL", "ERROR"],
+    notifyFormat="markdown"
 )
 ```
 
@@ -121,15 +127,52 @@ logger = Tamga(
 | DEBUG | Indigo | `logger.debug()` | Debug information |
 | CRITICAL | Red | `logger.critical()` | Critical issues |
 | DATABASE | Green | `logger.database()` | Database operations |
-| MAIL | Neutral | `logger.mail()` | Email notifications* |
+| NOTIFY | Purple | `logger.notify()` | Direct notifications |
 | METRIC | Cyan | `logger.metric()` | Performance metrics |
 | TRACE | Gray | `logger.trace()` | Detailed trace info |
 | DIR | Yellow | `logger.dir()` | Structured key-value data |
 | CUSTOM | Any | `logger.custom()` | Custom levels |
 
-*Note: `mail()` method triggers email notifications when `sendMail=True`
-
 ## 🔧 Advanced Features
+
+### Notifications (80+ Services)
+```python
+# Multi-service notifications
+logger = Tamga(
+    notifyServices=[
+        "discord://webhook_id/webhook_token",
+        "slack://tokenA/tokenB/tokenC/#channel",
+        "telegram://bottoken/chatid",
+        "mailto://user:pass@gmail.com",
+        "twilio://SID:Token@FromPhone/ToPhone"
+    ]
+)
+
+# Direct notifications
+logger.notify("Deployment completed!")
+logger.notify("Critical alert!", title="🚨 Emergency")
+
+# Auto-notify on specific levels
+logger.critical("This will notify all services!")
+
+# Notification with custom services (override defaults)
+logger.notify(
+    "Deployment to production completed!",
+    title="🚀 Production Deploy",
+    services=["discord://webhook", "slack://tokens"]
+)
+```
+
+**Popular notification services:**
+- **Discord**: `discord://webhook_id/webhook_token`
+- **Slack**: `slack://tokenA/tokenB/tokenC/#channel`
+- **Telegram**: `tgram://bottoken/ChatID`
+- **SMS (Twilio)**: `twilio://SID:Token@FromPhone/ToPhone`
+- **Email**: `mailto://user:pass@gmail.com`
+- **Teams**: `msteams://TokenA/TokenB/TokenC`
+- **Desktop**: `gnome://` (Linux), `macosx://` (macOS), `windows://` (Windows)
+
+[See all 80+ supported services](https://github.com/caronc/apprise)
 
 ### Custom Log Levels
 ```python

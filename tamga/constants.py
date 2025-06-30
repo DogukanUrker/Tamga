@@ -38,7 +38,7 @@ LOG_LEVELS: Dict[str, str] = {
     "DEBUG": "indigo",
     "CRITICAL": "red",
     "DATABASE": "green",
-    "MAIL": "neutral",
+    "NOTIFY": "purple",
     "METRIC": "cyan",
     "TRACE": "gray",
     "DIR": "yellow",

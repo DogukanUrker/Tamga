@@ -8,7 +8,6 @@ from typing import Any, Dict
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
-from .utils.mail import Mail
 from .utils.time import currentDate, currentTime, currentTimeStamp, currentTimeZone
 
 
@@ -26,8 +25,6 @@ class Tamga:
         "logToConsole",
         "logToMongo",
         "logToSQL",
-        "logToAPI",
-        "sendMail",
         "showDay",
         "showTime",
         "showTimezone",
@@ -38,13 +35,10 @@ class Tamga:
         "logJSON",
         "logSQL",
         "sqlTable",
-        "smtpServer",
-        "smtpPort",
-        "smtpMail",
-        "smtpPassword",
-        "smtpReceivers",
-        "mailLevels",
-        "apiURL",
+        "notifyServices",
+        "notifyLevels",
+        "notifyTitle",
+        "notifyFormat",
         "maxLogSize",
         "maxJsonSize",
         "maxSqlSize",
@@ -52,12 +46,12 @@ class Tamga:
         "bufferSize",
         "maxLevelWidth",
         "_mongo_client",
-        "_mail_client",
+        "_apprise",
+        "_notify_executor",
         "_file_buffer",
         "_json_buffer",
         "_buffer_lock",
         "_color_cache",
-        "_requests_module",
         "_json_file_handle",
         "_log_file_handle",
     ]
@@ -70,8 +64,6 @@ class Tamga:
         logToConsole: bool = True,
         logToMongo: bool = False,
         logToSQL: bool = False,
-        logToAPI: bool = False,
-        sendMail: bool = False,
         showDay: bool = True,
         showTime: bool = True,
         showTimezone: bool = False,
@@ -82,13 +74,10 @@ class Tamga:
         logJSON: str = "tamga.json",
         logSQL: str = "tamga.db",
         sqlTable: str = "logs",
-        smtpServer: str = None,
-        smtpPort: int = None,
-        smtpMail: str = None,
-        smtpPassword: str = None,
-        smtpReceivers: list = None,
-        mailLevels: list = ["MAIL"],
-        apiURL: str = None,
+        notifyServices: list = None,
+        notifyLevels: list = [],
+        notifyTitle: str = "{appname}: {level} - {date}",
+        notifyFormat: str = "text",
         maxLogSize: int = 10,
         maxJsonSize: int = 10,
         maxSqlSize: int = 50,
@@ -105,8 +94,6 @@ class Tamga:
             logToConsole: Enable logging to console (default: True)
             logToMongo: Enable logging to MongoDB (default: False)
             logToSQL: Enable logging to SQL database (default: False)
-            logToAPI: Enable logging to an API (default: False)
-            sendMail: Enable sending logs via email (default: False)
             showDay: Show day in console logs (default: True)
             showTime: Show time in console logs (default: True)
             showTimezone: Show timezone in console logs (default: False)
@@ -117,13 +104,10 @@ class Tamga:
             logJSON: Path to the JSON log file (default: "tamga.json")
             logSQL: Path to the SQL log file (default: "tamga.db")
             sqlTable: SQL table name for logs (default: "logs")
-            smtpServer: SMTP server address
-            smtpPort: SMTP server port
-            smtpMail: SMTP email address
-            smtpPassword: SMTP email password
-            smtpReceivers: List of email addresses to receive logs
-            mailLevels: List of log levels to send via email (default: ["MAIL"])
-            apiURL: URL of the API to send logs to
+            notifyServices: List of Apprise notification service URLs
+            notifyLevels: List of log levels to send notifications for (default: includes NOTIFY)
+            notifyTitle: Template for notification titles (default: "{appname}: {level} - {date}")
+            notifyFormat: Notification format type - text/markdown/html (default: "text")
             maxLogSize: Maximum size in MB for log file (default: 10)
             maxJsonSize: Maximum size in MB for JSON file (default: 10)
             maxSqlSize: Maximum size in MB for SQL file (default: 50)
@@ -136,8 +120,6 @@ class Tamga:
         self.logToConsole = logToConsole
         self.logToMongo = logToMongo
         self.logToSQL = logToSQL
-        self.logToAPI = logToAPI
-        self.sendMail = sendMail
         self.showDay = showDay
         self.showTime = showTime
         self.showTimezone = showTimezone
@@ -148,40 +130,31 @@ class Tamga:
         self.logJSON = logJSON
         self.logSQL = logSQL
         self.sqlTable = sqlTable
-        self.smtpServer = smtpServer
-        self.smtpPort = smtpPort
-        self.smtpMail = smtpMail
-        self.smtpPassword = smtpPassword
-        self.smtpReceivers = smtpReceivers
-        self.mailLevels = mailLevels
-        self.apiURL = apiURL
+        self.notifyServices = notifyServices or []
+        self.notifyTitle = notifyTitle
+        self.notifyFormat = notifyFormat
+        self.notifyLevels = list(set(notifyLevels + ["NOTIFY"]))
         self.maxLogSize = maxLogSize
         self.maxJsonSize = maxJsonSize
         self.maxSqlSize = maxSqlSize
         self.enableBackup = enableBackup
         self.bufferSize = bufferSize
-
         self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
         self._mongo_client = None
-        self._mail_client = None
+        self._apprise = None
+        self._notify_executor = None
         self._file_buffer = []
         self._json_buffer = []
         self._buffer_lock = threading.Lock()
-
         self._color_cache = {}
-        self._requests_module = None
         self._json_file_handle = None
         self._log_file_handle = None
-
         self._init_services()
 
     def _init_services(self):
         """Initialize external services and create necessary files."""
         if self.logToMongo:
             self._init_mongo()
-
-        if self.sendMail:
-            self._init_mail()
 
         if self.logToFile:
             self._ensure_file_exists(self.logFile)
@@ -213,16 +186,60 @@ class Tamga:
         except Exception as e:
             self._log_internal(f"Failed to connect to MongoDB: {e}", "CRITICAL", "red")
 
-    def _init_mail(self):
-        """Initialize mail client."""
-        self._mail_client = Mail(
-            serverAddress=self.smtpServer,
-            portNumber=self.smtpPort,
-            userName=self.smtpMail,
-            userPassword=self.smtpPassword,
-            senderEmail=self.smtpMail,
-            receiverEmails=self.smtpReceivers,
-        )
+    def _init_apprise(self):
+        """Lazy initialize Apprise for performance."""
+        if self._apprise is None and self.notifyServices:
+            try:
+                import apprise
+
+                self._apprise = apprise.Apprise()
+
+                for service in self.notifyServices:
+                    self._apprise.add(service)
+
+                from concurrent.futures import ThreadPoolExecutor
+
+                self._notify_executor = ThreadPoolExecutor(
+                    max_workers=2, thread_name_prefix="tamga-notify"
+                )
+
+                self._log_internal(
+                    f"Notification services initialized: {len(self.notifyServices)} services",
+                    "TAMGA",
+                    "lime",
+                )
+            except ImportError:
+                self._log_internal(
+                    "Apprise not installed. Install with: pip install tamga[notifications]",
+                    "WARNING",
+                    "amber",
+                )
+            except Exception as e:
+                self._log_internal(
+                    f"Failed to initialize notifications: {e}", "ERROR", "red"
+                )
+
+    def _send_notification_async(self, message: str, level: str, title: str = None):
+        """Send notification asynchronously without blocking."""
+        if not self.notifyServices or not self._apprise:
+            return
+
+        def send():
+            try:
+                final_title = title or self.notifyTitle.format(
+                    appname="Tamga", level=level, date=currentDate(), time=currentTime()
+                )
+
+                self._apprise.notify(
+                    body=message, title=final_title, body_format=self.notifyFormat
+                )
+            except Exception as e:
+                self._log_internal(f"Notification failed: {e}", "ERROR", "red")
+
+        if self._notify_executor:
+            self._notify_executor.submit(send)
+        else:
+            threading.Thread(target=send, daemon=True).start()
 
     def _init_json_file(self):
         """Initialize JSON log file."""
@@ -290,11 +307,11 @@ class Tamga:
         if self.logToSQL:
             self._write_to_sql(log_data)
 
-        if self.sendMail and level in self.mailLevels:
-            self._send_mail_async(message, level)
+        if level in self.notifyLevels and self.notifyServices:
+            if self._apprise is None:
+                self._init_apprise()
 
-        if self.logToAPI:
-            self._write_to_api_async(log_data)
+            self._send_notification_async(message, level)
 
         if self.logToMongo:
             self._write_to_mongo_async(log_data)
@@ -459,52 +476,6 @@ class Tamga:
         except Exception as e:
             self._log_internal(f"Failed to write to SQL: {e}", "ERROR", "red")
 
-    def _send_mail_async(self, message: str, level: str):
-        """Send mail asynchronously."""
-        if self._mail_client is None:
-            return
-
-        def send():
-            try:
-                self._mail_client.sendMail(
-                    emailSubject=f"TAMGA: {level} Log - {currentDate()}",
-                    messageContent=message,
-                    logLevel=level,
-                )
-            except Exception as e:
-                self._log_internal(f"Failed to send mail: {e}", "ERROR", "red")
-
-        threading.Thread(target=send, daemon=True).start()
-
-    def _write_to_api_async(self, log_data: Dict[str, Any]):
-        """Write to API asynchronously."""
-        if self._requests_module is None:
-            try:
-                import requests
-
-                self._requests_module = requests
-            except ImportError:
-                return
-
-        def send():
-            try:
-                self._requests_module.post(
-                    self.apiURL,
-                    json={
-                        "level": log_data["level"],
-                        "message": log_data["message"],
-                        "date": log_data["date"],
-                        "time": log_data["time"],
-                        "timezone": log_data["timezone"],
-                        "timestamp": log_data["unix_timestamp"],
-                    },
-                    timeout=5,
-                )
-            except Exception as e:
-                self._log_internal(f"Failed to send to API: {e}", "ERROR", "red")
-
-        threading.Thread(target=send, daemon=True).start()
-
     def _write_to_mongo_async(self, log_data: Dict[str, Any]):
         """Write to MongoDB asynchronously."""
         if self._mongo_client is None:
@@ -597,6 +568,9 @@ class Tamga:
         """Cleanup when logger is destroyed."""
         try:
             self.flush()
+            if self._notify_executor:
+                self._notify_executor.shutdown(wait=False)
+
             if self._log_file_handle and not self._log_file_handle.closed:
                 self._log_file_handle.close()
         except Exception:
@@ -623,10 +597,39 @@ class Tamga:
     def database(self, message: str) -> None:
         self.log(message, "DATABASE", "green")
 
-    def mail(self, message: str) -> None:
-        self.log(message, "MAIL", "neutral")
-        if not self.sendMail:
-            self._log_internal("Mail logging is not enabled!", "WARNING", "amber")
+    def notify(self, message: str, title: str = None, services: list = None) -> None:
+        """
+        Send a notification through configured services.
+
+        Args:
+            message: Notification message
+            title: Optional custom title (overrides template)
+            services: Optional list of services (overrides defaults)
+        """
+        self.log(message, "NOTIFY", "purple")
+
+        if services:
+            try:
+                import apprise
+
+                temp_apprise = apprise.Apprise()
+                for service in services:
+                    temp_apprise.add(service)
+
+                final_title = title or self.notifyTitle.format(
+                    appname="Tamga",
+                    level="NOTIFY",
+                    date=currentDate(),
+                    time=currentTime(),
+                )
+
+                temp_apprise.notify(
+                    body=message, title=final_title, body_format=self.notifyFormat
+                )
+            except Exception as e:
+                self._log_internal(f"Custom notification failed: {e}", "ERROR", "red")
+        elif self.notifyServices:
+            self._send_notification_async(message, "NOTIFY", title)
 
     def metric(self, message: str) -> None:
         self.log(message, "METRIC", "cyan")
