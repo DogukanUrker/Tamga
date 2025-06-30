@@ -57,7 +57,6 @@ pip install tamga                    # Basic installation
 pip install tamga[mongo]             # With MongoDB support
 pip install tamga[all]               # With all optional dependencies
 pip install tamga[notifications]     # With 80+ notification services
-pip install tamga[full]              # All features
 ```
 
 ## 🎯 Usage Examples
