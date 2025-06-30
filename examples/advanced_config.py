@@ -40,9 +40,9 @@ logger = Tamga(
     ]
     if os.getenv("NOTIFICATIONS_ENABLED")
     else [],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
+    notifyLevels=["CRITICAL", "ERROR"],
     notifyTitle="🚨 {appname} Alert: {level}",
-    notifyFormat="markdown",
+    notifyFormat="markdown",  # text, html, markdown
 )
 
 # Example log events
