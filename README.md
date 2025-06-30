@@ -15,10 +15,10 @@ A modern, high-performance logging utility for Python with multiple output forma
 
 - 🎨 **Beautiful Console Output** - Colorful, formatted logs using Tailwind CSS colors
 - ⚡ **High Performance** - Buffered writing system (10x faster than traditional logging)
-- 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB, API, and email
+- 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
-- 📧 **Email Alerts** - SMTP integration for critical notifications
+- 🔔 **Notifications** - Multi-service notifications via [Apprise](https://github.com/caronc/apprise) (Discord, Slack, Email, SMS, and more)
 - 🔍 **Structured Logging** - Key-value data support with `dir()` method
 
 ## 🚀 Quick Start
@@ -52,10 +52,10 @@ See [`examples/`](./examples) for ready-to-run scripts:
 ## 📦 Installation
 
 ```bash
-pip install tamga              # Basic installation
-pip install tamga[mongo]       # With MongoDB support
-pip install tamga[api]         # With API logging support
-pip install tamga[full]        # All features
+pip install tamga                    # Basic installation
+pip install tamga[mongo]             # With MongoDB support
+pip install tamga[notifications]     # With notification support
+pip install tamga[all]              # All features
 ```
 
 ## 🎯 Usage Examples
@@ -102,11 +102,14 @@ logger = Tamga(
     logToMongo=True,
     mongoURI="mongodb://...",
 
-    # Email alerts
-    sendMail=True,
-    smtpServer="smtp.gmail.com",
-    smtpPort=587,
-    mailLevels=["CRITICAL", "ERROR"],
+    # Multi-service notifications
+    notifyServices=[
+        "discord://webhook_id/webhook_token",
+        "slack://tokenA/tokenB/tokenC/#alerts",
+        "mailto://user:pass@smtp.gmail.com:587/?to=alerts@company.com",
+        "twilio://SID:Token@+1234567890/+0987654321",
+    ],
+    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
 )
 ```
 
@@ -121,15 +124,33 @@ logger = Tamga(
 | DEBUG | Indigo | `logger.debug()` | Debug information |
 | CRITICAL | Red | `logger.critical()` | Critical issues |
 | DATABASE | Green | `logger.database()` | Database operations |
-| MAIL | Neutral | `logger.mail()` | Email notifications* |
+| NOTIFY | Purple | `logger.notify()` | Send notifications |
 | METRIC | Cyan | `logger.metric()` | Performance metrics |
 | TRACE | Gray | `logger.trace()` | Detailed trace info |
 | DIR | Yellow | `logger.dir()` | Structured key-value data |
 | CUSTOM | Any | `logger.custom()` | Custom levels |
 
-*Note: `mail()` method triggers email notifications when `sendMail=True`
-
 ## 🔧 Advanced Features
+
+### Notifications
+```python
+# Configure notification services (supports 80+ services via Apprise)
+logger = Tamga(
+    notifyServices=[
+        "discord://webhook_id/webhook_token",
+        "slack://tokenA/tokenB/tokenC/#channel",
+    ],
+    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
+    notifyTitle="{appname}: {level} Alert",
+    notifyFormat="markdown",  # text, markdown, or html
+)
+
+# Send notification
+logger.notify("Payment received from user #123")
+
+# Critical logs also trigger notifications
+logger.critical("Database connection lost")
+```
 
 ### Custom Log Levels
 ```python
