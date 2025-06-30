@@ -18,7 +18,7 @@ A modern, high-performance logging utility for Python with multiple output forma
 - 📊 **Multiple Outputs** - Console, file, JSON, SQLite, MongoDB, and notifications
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
-- 📱 **80+ Notification Services** - Discord, Slack, Telegram, SMS, Email, and more via Apprise
+- 📱 **80+ Notification Services** - Discord, Slack, Telegram, SMS, Email, and more via [Apprise](https://github.com/caronc/apprise)
 - 🔍 **Structured Logging** - Key-value data support with `dir()` method
 
 ## 🚀 Quick Start
