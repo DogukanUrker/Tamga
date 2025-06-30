@@ -9,47 +9,70 @@ from ..constants import COLOR_PALLETTE, LOG_LEVELS
 
 def get_level_color(level: str) -> str:
     """Get hex color for log level using existing color system."""
-    color_name = LOG_LEVELS.get(level, "indigo")
-    rgb = COLOR_PALLETTE.get(color_name, (99, 102, 241))
+    color_name = LOG_LEVELS.get(level, "purple")
+    rgb = COLOR_PALLETTE.get(color_name, (168, 85, 247))
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
 def create_html_template(message: str, level: str, date: str, time: str) -> str:
     """Create modern HTML template for notifications."""
     color = get_level_color(level)
-    rgb = COLOR_PALLETTE.get(LOG_LEVELS.get(level, "indigo"), (99, 102, 241))
+    rgb = COLOR_PALLETTE.get(LOG_LEVELS.get(level, "purple"), (168, 85, 247))
     light_bg = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.1)"
 
     return f"""
-<div style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tamga - Notification</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+        <div style="background-color: #f5f5f5; padding: 40px 20px;">
+            <div style="max-width: 560px; margin: 0 auto;">
 
-    <div style="background: linear-gradient(135deg, {color} 0%, {color}dd 100%); padding: 24px; text-align: center;">
-        <h1 style="margin: 0; color: white; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;">
-            {level} NOTIFICATION
-        </h1>
-    </div>
+                <!-- Card -->
+                <div style="border: 1px solid #e5e5e5; border-radius: 12px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04); overflow: hidden;">
 
-    <div style="padding: 32px 24px;">
-        <div style="background: {light_bg}; border-left: 4px solid {color}; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
-            <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #2d3748; font-weight: 500;">
-                {message}
-            </p>
+                    <!-- Header with light background -->
+                    <div style="padding: 24px 28px; background: {light_bg}; border-bottom: 1px solid #e5e5e5;">
+                        <table width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td>
+                                    <span style="color: {color}; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                                        ● {level}
+                                    </span>
+                                </td>
+                                <td align="right">
+                                    <span style="color: #525252; font-size: 13px; font-weight: 500;">
+                                        {date} • {time}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Body -->
+                    <div style="padding: 32px 28px;">
+                        <p style="margin: 0; color: #000000; font-size: 18px; line-height: 1.6; font-weight: 500; text-align: center;">
+                            {message}
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding: 20px 28px; border-top: 1px solid #f0f0f0; background: #fafafa;">
+                        <p style="margin: 0; text-align: center; color: #737373; font-size: 13px;">
+                            Powered by <a href="https://tamga.vercel.app" style="color: {color}; text-decoration: none; font-weight: 600;">Tamga</a>
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
         </div>
-
-        <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; text-align: center;">
-            <span style="color: #718096; font-size: 14px; font-weight: 600;">
-                {date} | {time}
-            </span>
-        </div>
-    </div>
-
-    <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0; color: #a0aec0; font-size: 12px;">
-            Powered by <a href="https://tamga.vercel.app" style="font-weight: 600; color: {color}; text-decoration: none;">Tamga Logger</a>
-        </p>
-    </div>
-
-</div>
+    </body>
+    </html>
     """.strip()
 
 
