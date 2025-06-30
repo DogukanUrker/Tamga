@@ -229,9 +229,12 @@ class Tamga:
                 final_title = title or self.notifyTitle.format(
                     appname="Tamga", level=level, date=currentDate(), time=currentTime()
                 )
+                formatted_message = self._apply_default_template(message, level)
 
                 self._apprise.notify(
-                    body=message, title=final_title, body_format=self.notifyFormat
+                    body=formatted_message,
+                    title=final_title,
+                    body_format=self.notifyFormat,
                 )
             except Exception as e:
                 self._log_internal(f"Notification failed: {e}", "ERROR", "red")
@@ -240,6 +243,20 @@ class Tamga:
             self._notify_executor.submit(send)
         else:
             threading.Thread(target=send, daemon=True).start()
+
+    def _apply_default_template(self, message: str, level: str) -> str:
+        """Apply notification templates using the unified apprise module."""
+        try:
+            from .utils.apprise import format_notification
+
+            return format_notification(
+                message, level, currentDate(), currentTime(), self.notifyFormat
+            )
+        except Exception as e:
+            self._log_internal(
+                f"Failed to apply notification template: {e}", "ERROR", "red"
+            )
+            return message
 
     def _init_json_file(self):
         """Initialize JSON log file."""
