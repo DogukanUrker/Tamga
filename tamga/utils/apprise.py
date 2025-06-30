@@ -4,7 +4,7 @@ Supports HTML, Markdown, and Text formats
 Uses the existing color system for different log levels
 """
 
-from ..constants import COLOR_PALLETTE, LOG_LEVELS
+from ..constants import COLOR_PALLETTE, LOG_EMOJIS, LOG_LEVELS
 
 
 def get_level_color(level: str) -> str:
@@ -14,11 +14,17 @@ def get_level_color(level: str) -> str:
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
+def get_level_emoji(level: str) -> str:
+    """Get emoji for log level."""
+    return LOG_EMOJIS.get(level, "📝")
+
+
 def create_html_template(message: str, level: str, date: str, time: str) -> str:
     """Create modern HTML template for notifications."""
     color = get_level_color(level)
     rgb = COLOR_PALLETTE.get(LOG_LEVELS.get(level, "purple"), (168, 85, 247))
     light_bg = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.1)"
+    emoji = get_level_emoji(level)
 
     return f"""
     <!DOCTYPE html>
@@ -26,7 +32,7 @@ def create_html_template(message: str, level: str, date: str, time: str) -> str:
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Tamga - Notification</title>
+        <title>{emoji} Tamga - {level} Notification</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
         <div style="background-color: #f5f5f5; padding: 40px 20px;">
@@ -78,20 +84,7 @@ def create_html_template(message: str, level: str, date: str, time: str) -> str:
 
 def create_markdown_template(message: str, level: str, date: str, time: str) -> str:
     """Create markdown template for notifications."""
-    level_emoji = {
-        "INFO": "ℹ️",
-        "WARNING": "⚠️",
-        "ERROR": "❌",
-        "SUCCESS": "✅",
-        "DEBUG": "🐛",
-        "CRITICAL": "🚨",
-        "DATABASE": "🗄️",
-        "NOTIFY": "📢",
-        "METRIC": "📊",
-        "TRACE": "🔍",
-    }
-
-    emoji = level_emoji.get(level, "📝")
+    emoji = get_level_emoji(level)
 
     return f"""## {emoji} {level} Notification
 
@@ -106,17 +99,15 @@ def create_markdown_template(message: str, level: str, date: str, time: str) -> 
 
 def create_text_template(message: str, level: str, date: str, time: str) -> str:
     """Create plain text template for notifications."""
-    # Shorter border for better compatibility with notification systems
-    border = "=" * 25
+    emoji = get_level_emoji(level)
 
-    return f"""{border}
-{level} NOTIFICATION
-{border}
+    return f"""
+{emoji} {level} NOTIFICATION
 
 {message}
 
-{date} | {time}
-{border}"""
+{date} • {time}
+"""
 
 
 def format_notification(

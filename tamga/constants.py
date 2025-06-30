@@ -43,3 +43,17 @@ LOG_LEVELS: Dict[str, str] = {
     "TRACE": "gray",
     "DIR": "yellow",
 }
+
+LOG_EMOJIS: Dict[str, str] = {
+    "INFO": "ℹ️",
+    "WARNING": "⚠️",
+    "ERROR": "❌",
+    "SUCCESS": "✅",
+    "DEBUG": "🐛",
+    "CRITICAL": "🚨",
+    "DATABASE": "🗄️",
+    "NOTIFY": "📢",
+    "METRIC": "📊",
+    "TRACE": "🔍",
+    "DIR": "📝",
+}
