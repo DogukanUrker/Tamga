@@ -45,7 +45,48 @@ logger.critical("Database connection lost")
 
 ## Configuration Parameters
 
-### Display Settings
+### Quick Reference
+
+#### Output Configuration
+- `console_output`: bool = True - Enable logging to console
+- `colored_output`: bool = True - Enable colored console output
+- `file_output`: bool = False - Enable logging to a file
+- `json_output`: bool = False - Enable logging to a JSON file
+- `mongo_output`: bool = False - Enable logging to MongoDB
+- `sql_output`: bool = False - Enable logging to SQL database
+
+#### Display Settings
+- `show_date`: bool = True - Show date in console logs
+- `show_time`: bool = True - Show time in console logs
+- `show_timezone`: bool = False - Show timezone in console logs
+
+#### File Paths and Configurations
+- `file_path`: str = "tamga.log" - Path to the log file
+- `json_path`: str = "tamga.json" - Path to the JSON log file
+- `sql_path`: str = "tamga.db" - Path to the SQL log file
+- `sql_table_name`: str = "logs" - SQL table name for logs
+
+#### MongoDB Configuration
+- `mongo_uri`: str = None - MongoDB connection URI
+- `mongo_database_name`: str = "tamga" - MongoDB database name
+- `mongo_collection_name`: str = "logs" - MongoDB collection name
+
+#### Notification Settings
+- `notify_services`: list = None - List of Apprise notification service URLs
+- `notify_levels`: list = [] - List of log levels to send notifications for (default includes NOTIFY)
+- `notify_title`: str = "{appname}: {level} - {date}" - Template for notification titles
+- `notify_format`: str = "text" - Notification format type (text/markdown/html)
+
+#### Size Limits and Buffering
+- `max_file_size_mb`: int = 10 - Maximum size in MB for log file
+- `max_json_size_mb`: int = 10 - Maximum size in MB for JSON file
+- `max_sql_size_mb`: int = 50 - Maximum size in MB for SQL file
+- `enable_backup`: bool = True - Enable backup when max size is reached
+- `buffer_size`: int = 50 - Number of logs to buffer before writing to file
+
+### Configuration Examples
+
+#### Display Settings
 
 ```python
 logger = Tamga(
@@ -60,16 +101,16 @@ logger = Tamga(
 )
 ```
 
-### Output Destinations
+#### Output Destinations
 
 ```python
 logger = Tamga(
     # File outputs
     file_output=False,       # Enable file logging (default: False)
-    json_path="tamga.log",   # Log file path (default: "tamga.log")
+    file_path="tamga.log",   # Log file path (default: "tamga.log")
 
     json_output=False,       # Enable JSON logging (default: False)
-    log_json="tamga.json",  # JSON file path (default: "tamga.json")
+    json_path="tamga.json",  # JSON file path (default: "tamga.json")
 
     sql_output=False,        # Enable SQLite logging (default: False)
     sql_path="tamga.db",     # SQLite file path (default: "tamga.db")
@@ -80,7 +121,7 @@ logger = Tamga(
 )
 ```
 
-### Performance Settings
+#### Performance Settings
 
 ```python
 logger = Tamga(
@@ -88,14 +129,14 @@ logger = Tamga(
     buffer_size=50,         # Logs to buffer before writing (default: 50)
 
     # File rotation (in MB)
-    max_log_size=10,         # Max log file size (default: 10)
+    max_file_size_mb=10,         # Max log file size (default: 10)
     max_json_size_mb=10,        # Max JSON file size (default: 10)
     max_sql_size_mb=50,         # Max SQLite size (default: 50)
     enable_backup=True,     # Create backups on rotation (default: True)
 )
 ```
 
-### MongoDB Configuration
+#### MongoDB Configuration
 
 ```python
 logger = Tamga(
@@ -106,7 +147,7 @@ logger = Tamga(
 )
 ```
 
-### Notification Configuration
+#### Notification Configuration
 
 ```python
 logger = Tamga(
@@ -260,8 +301,8 @@ import os
 logger = Tamga(
     # File logging with rotation
     file_output=True,
-    json_path="logs/app.log",
-    max_log_size=50,
+    file_path="logs/app.log",
+    max_file_size_mb=50,
     enable_backup=True,
 
     # JSON for log aggregation
@@ -325,7 +366,7 @@ logger = Tamga(
 
     # Local file for debugging
     file_output=True,
-    json_path="debug.log",
+    file_path="debug.log",
 )
 ```
 
@@ -376,7 +417,7 @@ logger = Tamga(
 
     # Include service context
     file_output=True,
-    json_path=f"logs/{service_name}.log",
+    file_path=f"logs/{service_name}.log",
 )
 
 # Add service context to all logs
@@ -414,7 +455,7 @@ def log_with_context(message, level="info"):
 
 ## File Rotation
 
-When a file reaches `max_log_size`:
+When a file reaches `max_file_size_mb`:
 
 1. If `enable_backup=True`, creates timestamped backup:
    - `tamga.log` → `tamga.log.20250628_143022.bak`
@@ -508,8 +549,8 @@ logger = Tamga(
 
     # Always log to file
     file_output=True,
-    json_path="logs/app.log",
-    max_log_size=50,
+    file_path="logs/app.log",
+    max_file_size_mb=50,
 
     # JSON for log aggregation
     json_output=True,

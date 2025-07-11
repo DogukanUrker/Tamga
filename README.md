@@ -70,7 +70,7 @@ logger = Tamga(
 
     # Output destinations
     file_output=True,        # Log to file
-    json_path="app.log",     # Log file path
+    file_path="app.log",     # Log file path
     buffer_size=50,         # Buffer size for performance
 )
 ```
@@ -165,7 +165,7 @@ logger.flush()
 ```
 
 ### File Rotation
-When log files reach `max_log_size`, Tamga automatically:
+When log files reach `max_file_size_mb`, Tamga automatically:
 - Creates timestamped backups (if enabled)
 - Clears the original file
 - Continues logging seamlessly

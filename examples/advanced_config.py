@@ -9,12 +9,12 @@ from tamga import Tamga
 logger = Tamga(
     # File logging with rotation and backup
     file_output=True,
-    json_path="logs/app.log",
-    max_log_size=50,  # 50 MB max file size
+    file_path="logs/app.log",
+    max_file_size_mb=50,  # 50 MB max file size
     enable_backup=True,  # Enable backup on rotation
     # JSON logging for log aggregation
     json_output=True,
-    log_json="logs/app.json",
+    json_path="logs/app.json",
     max_json_size_mb=50,
     # SQLite logging for analytics
     sql_output=True,
