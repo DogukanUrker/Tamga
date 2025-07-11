@@ -46,7 +46,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_file_logging(self):
         """Test file logging with buffering."""
         logger = Tamga(
-            log_to_console=False, log_to_file=True, log_file=self.log_file, buffer_size=2
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=2,
         )
 
         # Write less than buffer size
@@ -69,7 +72,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_json_logging(self):
         """Test JSON logging functionality."""
         logger = Tamga(
-            log_to_console=False, log_to_json=True, log_json=self.json_file, buffer_size=1
+            log_to_console=False,
+            log_to_json=True,
+            log_json=self.json_file,
+            buffer_size=1,
         )
 
         logger.error("JSON error message")
@@ -140,7 +146,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_dir_method(self):
         """Test structured logging with dir method."""
         logger = Tamga(
-            log_to_console=False, log_to_file=True, log_file=self.log_file, buffer_size=1
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=1,
         )
 
         logger.dir("User action", user_id=123, action="login", success=True)
@@ -175,7 +184,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_flush_on_deletion(self):
         """Test that buffers are flushed when logger is deleted."""
         logger = Tamga(
-            log_to_console=False, log_to_file=True, log_file=self.log_file, buffer_size=10
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=10,
         )
 
         logger.info("Message before deletion")
@@ -219,7 +231,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_all_log_levels(self):
         """Test all available log level methods."""
         logger = Tamga(
-            log_to_console=False, log_to_file=True, log_file=self.log_file, buffer_size=1
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=1,
         )
 
         # Test all methods

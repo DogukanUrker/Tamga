@@ -234,7 +234,10 @@ class Tamga:
         def send():
             try:
                 final_title = title or self.notify_title.format(
-                    appname="Tamga", level=level, date=current_date(), time=current_time()
+                    appname="Tamga",
+                    level=level,
+                    date=current_date(),
+                    time=current_time(),
                 )
                 formatted_message = self._apply_default_template(message, level)
 
