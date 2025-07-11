@@ -3,8 +3,8 @@ from tamga import Tamga
 logger = Tamga(
     show_time=True,
     show_timezone=False,
-    is_colored=True,
-    log_to_console=True,
+    colored_output=True,
+    console_output=True,
 )
 
 print("\n")

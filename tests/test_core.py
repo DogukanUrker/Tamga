@@ -17,7 +17,7 @@ class TestTamgaCore(unittest.TestCase):
     def setUp(self):
         """Set up test environment with temporary directory."""
         self.temp_dir = tempfile.mkdtemp()
-        self.log_file = os.path.join(self.temp_dir, "test.log")
+        self.json_path = os.path.join(self.temp_dir, "test.log")
         self.json_file = os.path.join(self.temp_dir, "test.json")
         self.sql_file = os.path.join(self.temp_dir, "test.db")
 
@@ -30,7 +30,7 @@ class TestTamgaCore(unittest.TestCase):
     def test_console_logging(self):
         """Test basic console logging functionality."""
         # Just ensure no exceptions are raised
-        logger = Tamga(log_to_console=True)
+        logger = Tamga(console_output=True)
         logger.info("Test info message")
         logger.warning("Test warning")
         logger.error("Test error")
@@ -40,30 +40,30 @@ class TestTamgaCore(unittest.TestCase):
 
     def test_console_logging_no_color(self):
         """Test console logging without colors."""
-        logger = Tamga(log_to_console=True, is_colored=False)
+        logger = Tamga(console_output=True, colored_output=False)
         logger.info("Test without colors")
 
     def test_file_logging(self):
         """Test file logging with buffering."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             buffer_size=2,
         )
 
         # Write less than buffer size
         logger.info("First message")
-        self.assertTrue(os.path.exists(self.log_file))
-        self.assertEqual(os.path.getsize(self.log_file), 0)
+        self.assertTrue(os.path.exists(self.json_path))
+        self.assertEqual(os.path.getsize(self.json_path), 0)
 
         # Trigger buffer flush
         logger.info("Second message")
         logger.flush()
 
         # Check file contents
-        self.assertTrue(os.path.exists(self.log_file))
-        with open(self.log_file, "r") as f:
+        self.assertTrue(os.path.exists(self.json_path))
+        with open(self.json_path, "r") as f:
             content = f.read()
             self.assertIn("First message", content)
             self.assertIn("Second message", content)
@@ -72,8 +72,8 @@ class TestTamgaCore(unittest.TestCase):
     def test_json_logging(self):
         """Test JSON logging functionality."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_json=True,
+            console_output=False,
+            json_output=True,
             log_json=self.json_file,
             buffer_size=1,
         )
@@ -93,10 +93,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_sql_logging(self):
         """Test SQLite logging functionality."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_sql=True,
-            log_sql=self.sql_file,
-            sql_table="test_logs",
+            console_output=False,
+            sql_output=True,
+            sql_path=self.sql_file,
+            sql_table_name="test_logs",
         )
 
         logger.warning("SQL warning message")
@@ -115,10 +115,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_multiple_outputs(self):
         """Test logging to multiple outputs simultaneously."""
         logger = Tamga(
-            log_to_console=True,
-            log_to_file=True,
-            log_to_json=True,
-            log_file=self.log_file,
+            console_output=True,
+            file_output=True,
+            json_output=True,
+            json_path=self.json_path,
             log_json=self.json_file,
             buffer_size=1,
         )
@@ -127,10 +127,10 @@ class TestTamgaCore(unittest.TestCase):
         logger.flush()
 
         # Check both files exist and contain the message
-        self.assertTrue(os.path.exists(self.log_file))
+        self.assertTrue(os.path.exists(self.json_path))
         self.assertTrue(os.path.exists(self.json_file))
 
-        with open(self.log_file, "r") as f:
+        with open(self.json_path, "r") as f:
             self.assertIn("Multi-output message", f.read())
 
         with open(self.json_file, "r") as f:
@@ -139,23 +139,23 @@ class TestTamgaCore(unittest.TestCase):
 
     def test_custom_log_level(self):
         """Test custom log levels."""
-        logger = Tamga(log_to_console=True)
+        logger = Tamga(console_output=True)
         logger.custom("Custom message", "CUSTOM", "purple")
         # Just ensure no exception is raised
 
     def test_dir_method(self):
         """Test structured logging with dir method."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             buffer_size=1,
         )
 
         logger.dir("User action", user_id=123, action="login", success=True)
         logger.flush()
 
-        with open(self.log_file, "r") as f:
+        with open(self.json_path, "r") as f:
             content = f.read()
             self.assertIn("User action", content)
             self.assertIn("user_id", content)
@@ -164,9 +164,9 @@ class TestTamgaCore(unittest.TestCase):
     def test_file_rotation(self):
         """Test file rotation when size limit is reached."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             max_log_size=0.001,  # 1KB
             enable_backup=True,
             buffer_size=1,
@@ -184,25 +184,25 @@ class TestTamgaCore(unittest.TestCase):
     def test_flush_on_deletion(self):
         """Test that buffers are flushed when logger is deleted."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             buffer_size=10,
         )
 
         logger.info("Message before deletion")
         del logger  # Should trigger flush
 
-        with open(self.log_file, "r") as f:
+        with open(self.json_path, "r") as f:
             self.assertIn("Message before deletion", f.read())
 
     def test_timezone_toggle(self):
         """Test timezone display toggle."""
         # Without timezone
         logger1 = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             show_timezone=False,
             buffer_size=1,
         )
@@ -210,11 +210,11 @@ class TestTamgaCore(unittest.TestCase):
         logger1.flush()
 
         # With timezone
-        log_file2 = os.path.join(self.temp_dir, "test2.log")
+        json_path2 = os.path.join(self.temp_dir, "test2.log")
         logger2 = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=log_file2,
+            console_output=False,
+            file_output=True,
+            json_path=json_path2,
             show_timezone=True,
             buffer_size=1,
         )
@@ -222,7 +222,7 @@ class TestTamgaCore(unittest.TestCase):
         logger2.flush()
 
         # Check content difference
-        with open(self.log_file, "r") as f1, open(log_file2, "r") as f2:
+        with open(self.json_path, "r") as f1, open(json_path2, "r") as f2:
             content1 = f1.read()
             content2 = f2.read()
             # The one with timezone should be longer
@@ -231,9 +231,9 @@ class TestTamgaCore(unittest.TestCase):
     def test_all_log_levels(self):
         """Test all available log level methods."""
         logger = Tamga(
-            log_to_console=False,
-            log_to_file=True,
-            log_file=self.log_file,
+            console_output=False,
+            file_output=True,
+            json_path=self.json_path,
             buffer_size=1,
         )
 
@@ -249,7 +249,7 @@ class TestTamgaCore(unittest.TestCase):
         logger.trace("Trace test")
         logger.flush()
 
-        with open(self.log_file, "r") as f:
+        with open(self.json_path, "r") as f:
             content = f.read()
             for level in [
                 "INFO",

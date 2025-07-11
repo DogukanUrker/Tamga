@@ -64,13 +64,13 @@ pip install tamga[all]              # All features
 ```python
 logger = Tamga(
     # Display settings
-    is_colored=True,        # Colored output
+    colored_output=True,        # Colored output
     show_time=True,         # Include timestamp
     show_timezone=False,    # Include timezone
 
     # Output destinations
-    log_to_file=True,        # Log to file
-    log_file="app.log",     # Log file path
+    file_output=True,        # Log to file
+    json_path="app.log",     # Log file path
     buffer_size=50,         # Buffer size for performance
 )
 ```
@@ -90,16 +90,16 @@ logger.dir("User action",
 ```python
 logger = Tamga(
     # File rotation
-    log_to_file=True,
-    max_log_size=50,         # 50MB max file size
+    file_output=True,
+    max_file_size_mb=50,         # 50MB max file size
     enable_backup=True,     # Create backups
 
     # Performance
     buffer_size=200,        # Larger buffer for production
-    log_to_console=False,    # Disable console for speed
+    console_output=False,    # Disable console for speed
 
     # External services
-    log_to_mongo=True,
+    mongo_output=True,
     mongo_uri="mongodb://...",
 
     # Multi-service notifications
