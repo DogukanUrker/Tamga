@@ -80,7 +80,7 @@ class Tamga:
         log_sql: str = "tamga.db",
         sql_table: str = "logs",
         notify_services: list = None,
-        notify_levels: list | None = None,
+        notify_levels: list = [],
         notify_title: str = "{appname}: {level} - {date}",
         notify_format: str = "text",
         max_log_size: int = 10,
@@ -138,8 +138,6 @@ class Tamga:
         self.notify_services = notify_services or []
         self.notify_title = notify_title
         self.notify_format = notify_format
-        if notify_levels is None:
-            notify_levels = []
         self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
         self.max_log_size = max_log_size
         self.max_json_size = max_json_size
