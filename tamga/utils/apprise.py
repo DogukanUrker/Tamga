@@ -4,13 +4,13 @@ Supports HTML, Markdown, and Text formats
 Uses the existing color system for different log levels
 """
 
-from ..constants import COLOR_PALLETTE, LOG_EMOJIS, LOG_LEVELS
+from ..constants import COLOR_PALETTE, LOG_EMOJIS, LOG_LEVELS
 
 
 def get_level_color(level: str) -> str:
     """Get hex color for log level using existing color system."""
     color_name = LOG_LEVELS.get(level, "purple")
-    rgb = COLOR_PALLETTE.get(color_name, (168, 85, 247))
+    rgb = COLOR_PALETTE.get(color_name, (168, 85, 247))
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
@@ -22,7 +22,7 @@ def get_level_emoji(level: str) -> str:
 def create_html_template(message: str, level: str, date: str, time: str) -> str:
     """Create modern HTML template for notifications."""
     color = get_level_color(level)
-    rgb = COLOR_PALLETTE.get(LOG_LEVELS.get(level, "purple"), (168, 85, 247))
+    rgb = COLOR_PALETTE.get(LOG_LEVELS.get(level, "purple"), (168, 85, 247))
     light_bg = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.1)"
     emoji = get_level_emoji(level)
 

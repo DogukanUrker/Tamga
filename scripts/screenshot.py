@@ -1,10 +1,10 @@
 from tamga import Tamga
 
 logger = Tamga(
-    showTime=True,
-    showTimezone=False,
-    isColored=True,
-    logToConsole=True,
+    show_time=True,
+    show_timezone=False,
+    is_colored=True,
+    log_to_console=True,
 )
 
 print("\n")

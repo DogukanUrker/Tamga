@@ -11,11 +11,11 @@ from tamga import Tamga
 NUM_LOGS = 1_000_000  # One million log entries
 
 logger = Tamga(
-    logToFile=True,
-    logFile="biglog.log",
-    maxLogSize=100,  # 100 MB max file size
-    logToConsole=False,  # Disable console for max speed
-    bufferSize=10_000,  # Large buffer for throughput
+    log_to_file=True,
+    log_file="biglog.log",
+    max_log_size=100,  # 100 MB max file size
+    log_to_console=False,  # Disable console for max speed
+    buffer_size=10_000,  # Large buffer for throughput
 )
 
 print(f"Logging {NUM_LOGS:,} entries...")
@@ -32,5 +32,5 @@ elapsed = time.time() - start
 print(f"Done. Logged {NUM_LOGS:,} entries in {elapsed:.2f} seconds.")
 print(f"Throughput: {NUM_LOGS / elapsed:,.0f} logs/sec")
 
-# Tip: Try increasing NUM_LOGS or bufferSize for even higher throughput.
+# Tip: Try increasing NUM_LOGS or buffer_size for even higher throughput.
 # For benchmarking, compare with Python's built-in logging for reference.

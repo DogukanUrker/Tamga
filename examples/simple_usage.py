@@ -7,8 +7,8 @@ logger = Tamga()
 
 # Optional: Add notifications (requires pip install tamga[notifications])
 # logger = Tamga(
-#     notifyServices=["discord://webhook_id/webhook_token"],
-#     notifyLevels=["CRITICAL", "ERROR"]
+#     notify_services=["discord://webhook_id/webhook_token"],
+#     notify_levels=["CRITICAL", "ERROR"]
 # )
 
 # Log messages at various levels

@@ -30,7 +30,7 @@ class TestTamgaCore(unittest.TestCase):
     def test_console_logging(self):
         """Test basic console logging functionality."""
         # Just ensure no exceptions are raised
-        logger = Tamga(logToConsole=True)
+        logger = Tamga(log_to_console=True)
         logger.info("Test info message")
         logger.warning("Test warning")
         logger.error("Test error")
@@ -40,13 +40,16 @@ class TestTamgaCore(unittest.TestCase):
 
     def test_console_logging_no_color(self):
         """Test console logging without colors."""
-        logger = Tamga(logToConsole=True, isColored=False)
+        logger = Tamga(log_to_console=True, is_colored=False)
         logger.info("Test without colors")
 
     def test_file_logging(self):
         """Test file logging with buffering."""
         logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=2
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=2,
         )
 
         # Write less than buffer size
@@ -69,7 +72,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_json_logging(self):
         """Test JSON logging functionality."""
         logger = Tamga(
-            logToConsole=False, logToJSON=True, logJSON=self.json_file, bufferSize=1
+            log_to_console=False,
+            log_to_json=True,
+            log_json=self.json_file,
+            buffer_size=1,
         )
 
         logger.error("JSON error message")
@@ -87,10 +93,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_sql_logging(self):
         """Test SQLite logging functionality."""
         logger = Tamga(
-            logToConsole=False,
-            logToSQL=True,
-            logSQL=self.sql_file,
-            sqlTable="test_logs",
+            log_to_console=False,
+            log_to_sql=True,
+            log_sql=self.sql_file,
+            sql_table="test_logs",
         )
 
         logger.warning("SQL warning message")
@@ -109,12 +115,12 @@ class TestTamgaCore(unittest.TestCase):
     def test_multiple_outputs(self):
         """Test logging to multiple outputs simultaneously."""
         logger = Tamga(
-            logToConsole=True,
-            logToFile=True,
-            logToJSON=True,
-            logFile=self.log_file,
-            logJSON=self.json_file,
-            bufferSize=1,
+            log_to_console=True,
+            log_to_file=True,
+            log_to_json=True,
+            log_file=self.log_file,
+            log_json=self.json_file,
+            buffer_size=1,
         )
 
         logger.success("Multi-output message")
@@ -133,14 +139,17 @@ class TestTamgaCore(unittest.TestCase):
 
     def test_custom_log_level(self):
         """Test custom log levels."""
-        logger = Tamga(logToConsole=True)
+        logger = Tamga(log_to_console=True)
         logger.custom("Custom message", "CUSTOM", "purple")
         # Just ensure no exception is raised
 
     def test_dir_method(self):
         """Test structured logging with dir method."""
         logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=1
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=1,
         )
 
         logger.dir("User action", user_id=123, action="login", success=True)
@@ -155,12 +164,12 @@ class TestTamgaCore(unittest.TestCase):
     def test_file_rotation(self):
         """Test file rotation when size limit is reached."""
         logger = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=self.log_file,
-            maxLogSize=0.001,  # 1KB
-            enableBackup=True,
-            bufferSize=1,
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            max_log_size=0.001,  # 1KB
+            enable_backup=True,
+            buffer_size=1,
         )
 
         # Write enough data to trigger rotation
@@ -175,7 +184,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_flush_on_deletion(self):
         """Test that buffers are flushed when logger is deleted."""
         logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=10
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=10,
         )
 
         logger.info("Message before deletion")
@@ -188,11 +200,11 @@ class TestTamgaCore(unittest.TestCase):
         """Test timezone display toggle."""
         # Without timezone
         logger1 = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=self.log_file,
-            showTimezone=False,
-            bufferSize=1,
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            show_timezone=False,
+            buffer_size=1,
         )
         logger1.info("No timezone")
         logger1.flush()
@@ -200,11 +212,11 @@ class TestTamgaCore(unittest.TestCase):
         # With timezone
         log_file2 = os.path.join(self.temp_dir, "test2.log")
         logger2 = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=log_file2,
-            showTimezone=True,
-            bufferSize=1,
+            log_to_console=False,
+            log_to_file=True,
+            log_file=log_file2,
+            show_timezone=True,
+            buffer_size=1,
         )
         logger2.info("With timezone")
         logger2.flush()
@@ -219,7 +231,10 @@ class TestTamgaCore(unittest.TestCase):
     def test_all_log_levels(self):
         """Test all available log level methods."""
         logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=1
+            log_to_console=False,
+            log_to_file=True,
+            log_file=self.log_file,
+            buffer_size=1,
         )
 
         # Test all methods

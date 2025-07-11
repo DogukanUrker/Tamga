@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-from ..constants import COLOR_PALLETTE
+from ..constants import COLOR_PALETTE
 
 
 class ColorType(Enum):
@@ -32,9 +32,9 @@ class Color:
     Provides methods for text colors, background colors, and text styles.
     """
 
-    endCode: str = "\033[0m"
+    end_code: str = "\033[0m"
 
-    _color_palette: Dict[str, Tuple[int, int, int]] = COLOR_PALLETTE
+    _color_palette: Dict[str, Tuple[int, int, int]] = COLOR_PALETTE
 
     _style_codes: Dict[str, str] = {
         "bold": "\033[1m",

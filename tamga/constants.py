@@ -5,7 +5,7 @@ Constants for Tamga logger
 from typing import Dict, Tuple
 
 # Tailwind CSS color palette (color-500 values)
-COLOR_PALLETTE: Dict[str, Tuple[int, int, int]] = {
+COLOR_PALETTE: Dict[str, Tuple[int, int, int]] = {
     "slate": (100, 116, 139),
     "gray": (107, 114, 128),
     "zinc": (113, 113, 122),
