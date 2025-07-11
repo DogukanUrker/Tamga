@@ -36,8 +36,8 @@ class Tamga:
         "mongo_uri",
         "mongo_database_name",
         "mongo_collection_name",
+        "file_path",
         "json_path",
-        "log_json",
         "sql_path",
         "sql_table_name",
         "notify_services",
@@ -58,7 +58,7 @@ class Tamga:
         "_buffer_lock",
         "_color_cache",
         "_json_file_handle",
-        "_json_path_handle",
+        "_file_path_handle",
     ]
 
     def __init__(
@@ -75,8 +75,8 @@ class Tamga:
         mongo_uri: str = None,
         mongo_database_name: str = "tamga",
         mongo_collection_name: str = "logs",
-        json_path: str = "tamga.log",
-        log_json: str = "tamga.json",
+        file_path: str = "tamga.log",
+        json_path: str = "tamga.json",
         sql_path: str = "tamga.db",
         sql_table_name: str = "logs",
         notify_services: list = None,
@@ -105,8 +105,8 @@ class Tamga:
             mongo_uri: MongoDB connection URI
             mongo_database_name: MongoDB database name (default: "tamga")
             mongo_collection_name: MongoDB collection name (default: "logs")
-            json_path: Path to the log file (default: "tamga.log")
-            log_json: Path to the JSON log file (default: "tamga.json")
+            file_path: Path to the log file (default: "tamga.log")
+            json_path: Path to the JSON log file (default: "tamga.json")
             sql_path: Path to the SQL log file (default: "tamga.db")
             sql_table_name: SQL table name for logs (default: "logs")
             notify_services: List of Apprise notification service URLs
@@ -131,8 +131,8 @@ class Tamga:
         self.mongo_uri = mongo_uri
         self.mongo_database_name = mongo_database_name
         self.mongo_collection_name = mongo_collection_name
+        self.file_path = file_path
         self.json_path = json_path
-        self.log_json = log_json
         self.sql_path = sql_path
         self.sql_table_name = sql_table_name
         self.notify_services = notify_services or []
@@ -153,7 +153,7 @@ class Tamga:
         self._buffer_lock = threading.Lock()
         self._color_cache = {}
         self._json_file_handle = None
-        self._json_path_handle = None
+        self._file_path_handle = None
         self._init_services()
 
     def _init_services(self):
@@ -162,10 +162,10 @@ class Tamga:
             self._init_mongo()
 
         if self.file_output:
-            self._ensure_file_exists(self.json_path)
+            self._ensure_file_exists(self.file_path)
             try:
-                self._json_path_handle = open(
-                    self.json_path, "a", encoding="utf-8", buffering=8192
+                self._file_path_handle = open(
+                    self.file_path, "a", encoding="utf-8", buffering=8192
                 )
             except Exception:
                 pass
@@ -268,8 +268,8 @@ class Tamga:
 
     def _init_json_file(self):
         """Initialize JSON log file."""
-        if not os.path.exists(self.log_json):
-            with open(self.log_json, "w", encoding="utf-8") as f:
+        if not os.path.exists(self.json_path):
+            with open(self.json_path, "w", encoding="utf-8") as f:
                 json.dump([], f)
 
     def _init_sql_db(self):
@@ -360,18 +360,18 @@ class Tamga:
         if not self._file_buffer:
             return
 
-        self._handle_file_rotation(self.json_path, self.max_log_size)
+        self._handle_file_rotation(self.file_path, self.max_log_size)
 
         try:
-            if self._json_path_handle and not self._json_path_handle.closed:
+            if self._file_path_handle and not self._file_path_handle.closed:
                 for log_data in self._file_buffer:
                     file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
-                    self._json_path_handle.write(
+                    self._file_path_handle.write(
                         f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
                     )
-                self._json_path_handle.flush()
+                self._file_path_handle.flush()
             else:
-                with open(self.json_path, "a", encoding="utf-8") as f:
+                with open(self.file_path, "a", encoding="utf-8") as f:
                     for log_data in self._file_buffer:
                         file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                         f.write(
@@ -386,10 +386,10 @@ class Tamga:
         if not self._json_buffer:
             return
 
-        self._handle_file_rotation(self.log_json, self.max_json_size_mb)
+        self._handle_file_rotation(self.json_path, self.max_json_size_mb)
 
         try:
-            with open(self.log_json, "r+", encoding="utf-8") as f:
+            with open(self.json_path, "r+", encoding="utf-8") as f:
                 f.seek(0, 2)
                 file_size = f.tell()
 
@@ -557,9 +557,9 @@ class Tamga:
         if not self._check_file_size(filepath, max_size_mb):
             return
 
-        if filepath == self.json_path and self._json_path_handle:
-            self._json_path_handle.close()
-            self._json_path_handle = None
+        if filepath == self.file_path and self._file_path_handle:
+            self._file_path_handle.close()
+            self._file_path_handle = None
 
         if self.enable_backup:
             self._create_backup(filepath)
@@ -574,9 +574,9 @@ class Tamga:
             else:
                 open(filepath, "w", encoding="utf-8").close()
 
-            if filepath == self.json_path:
-                self._json_path_handle = open(
-                    self.json_path, "a", encoding="utf-8", buffering=8192
+            if filepath == self.file_path:
+                self._file_path_handle = open(
+                    self.file_path, "a", encoding="utf-8", buffering=8192
                 )
         except Exception as e:
             self._log_internal(f"Failed to rotate file: {e}", "ERROR", "red")
@@ -596,8 +596,8 @@ class Tamga:
             if self._notify_executor:
                 self._notify_executor.shutdown(wait=False)
 
-            if self._json_path_handle and not self._json_path_handle.closed:
-                self._json_path_handle.close()
+            if self._file_path_handle and not self._file_path_handle.closed:
+                self._file_path_handle.close()
         except Exception:
             pass
 

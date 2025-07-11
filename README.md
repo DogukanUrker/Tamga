@@ -70,7 +70,7 @@ logger = Tamga(
 
     # Output destinations
     file_output=True,        # Log to file
-    json_path="app.log",     # Log file path
+    file_path="app.log",     # Log file path
     buffer_size=50,         # Buffer size for performance
 )
 ```

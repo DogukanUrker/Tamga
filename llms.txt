@@ -66,10 +66,10 @@ logger = Tamga(
 logger = Tamga(
     # File outputs
     file_output=False,       # Enable file logging (default: False)
-    json_path="tamga.log",   # Log file path (default: "tamga.log")
+    file_path="tamga.log",   # Log file path (default: "tamga.log")
 
     json_output=False,       # Enable JSON logging (default: False)
-    log_json="tamga.json",  # JSON file path (default: "tamga.json")
+    json_path="tamga.json",  # JSON file path (default: "tamga.json")
 
     sql_output=False,        # Enable SQLite logging (default: False)
     sql_path="tamga.db",     # SQLite file path (default: "tamga.db")
@@ -260,7 +260,7 @@ import os
 logger = Tamga(
     # File logging with rotation
     file_output=True,
-    json_path="logs/app.log",
+    file_path="logs/app.log",
     max_log_size=50,
     enable_backup=True,
 
@@ -325,7 +325,7 @@ logger = Tamga(
 
     # Local file for debugging
     file_output=True,
-    json_path="debug.log",
+    file_path="debug.log",
 )
 ```
 
@@ -376,7 +376,7 @@ logger = Tamga(
 
     # Include service context
     file_output=True,
-    json_path=f"logs/{service_name}.log",
+    file_path=f"logs/{service_name}.log",
 )
 
 # Add service context to all logs
@@ -508,7 +508,7 @@ logger = Tamga(
 
     # Always log to file
     file_output=True,
-    json_path="logs/app.log",
+    file_path="logs/app.log",
     max_log_size=50,
 
     # JSON for log aggregation
