@@ -24,32 +24,40 @@ class Tamga:
     LOG_LEVELS = LOG_LEVELS
 
     __slots__ = [
+        # Output configuration
+        "console_output",
         "colored_output",
         "file_output",
         "json_output",
-        "console_output",
         "mongo_output",
         "sql_output",
+        # Display settings
         "show_date",
         "show_time",
         "show_timezone",
-        "mongo_uri",
-        "mongo_database_name",
-        "mongo_collection_name",
+        # File paths and configurations
         "file_path",
         "json_path",
         "sql_path",
         "sql_table_name",
+        # MongoDB configuration
+        "mongo_uri",
+        "mongo_database_name",
+        "mongo_collection_name",
+        # Notification settings
         "notify_services",
         "notify_levels",
         "notify_title",
         "notify_format",
+        # Size limits and buffering
         "max_file_size_mb",
         "max_json_size_mb",
         "max_sql_size_mb",
         "enable_backup",
         "buffer_size",
+        # Computed values
         "max_level_width",
+        # Internal state (private)
         "_mongo_client",
         "_apprise",
         "_notify_executor",
@@ -63,26 +71,32 @@ class Tamga:
 
     def __init__(
         self,
+        # Output configuration
+        console_output: bool = True,
         colored_output: bool = True,
         file_output: bool = False,
         json_output: bool = False,
-        console_output: bool = True,
         mongo_output: bool = False,
         sql_output: bool = False,
+        # Display settings
         show_date: bool = True,
         show_time: bool = True,
         show_timezone: bool = False,
-        mongo_uri: str = None,
-        mongo_database_name: str = "tamga",
-        mongo_collection_name: str = "logs",
+        # File paths and configurations
         file_path: str = "tamga.log",
         json_path: str = "tamga.json",
         sql_path: str = "tamga.db",
         sql_table_name: str = "logs",
+        # MongoDB configuration
+        mongo_uri: str = None,
+        mongo_database_name: str = "tamga",
+        mongo_collection_name: str = "logs",
+        # Notification settings
         notify_services: list = None,
         notify_levels: list = [],
         notify_title: str = "{appname}: {level} - {date}",
         notify_format: str = "text",
+        # Size limits and buffering
         max_file_size_mb: int = 10,
         max_json_size_mb: int = 10,
         max_sql_size_mb: int = 50,
@@ -93,22 +107,22 @@ class Tamga:
         Initialize Tamga with optional features.
 
         Args:
+            console_output: Enable logging to console (default: True)
             colored_output: Enable colored console output (default: True)
             file_output: Enable logging to a file (default: False)
             json_output: Enable logging to a JSON file (default: False)
-            console_output: Enable logging to console (default: True)
             mongo_output: Enable logging to MongoDB (default: False)
             sql_output: Enable logging to SQL database (default: False)
             show_date: Show day in console logs (default: True)
             show_time: Show time in console logs (default: True)
             show_timezone: Show timezone in console logs (default: False)
-            mongo_uri: MongoDB connection URI
-            mongo_database_name: MongoDB database name (default: "tamga")
-            mongo_collection_name: MongoDB collection name (default: "logs")
             file_path: Path to the log file (default: "tamga.log")
             json_path: Path to the JSON log file (default: "tamga.json")
             sql_path: Path to the SQL log file (default: "tamga.db")
             sql_table_name: SQL table name for logs (default: "logs")
+            mongo_uri: MongoDB connection URI
+            mongo_database_name: MongoDB database name (default: "tamga")
+            mongo_collection_name: MongoDB collection name (default: "logs")
             notify_services: List of Apprise notification service URLs
             notify_levels: List of log levels to send notifications for (default: includes NOTIFY)
             notify_title: Template for notification titles (default: "{appname}: {level} - {date}")
@@ -119,32 +133,47 @@ class Tamga:
             enable_backup: Enable backup when max size is reached (default: True)
             buffer_size: Number of logs to buffer before writing to file (default: 50)
         """
+        # Output configuration
+        self.console_output = console_output
         self.colored_output = colored_output
         self.file_output = file_output
         self.json_output = json_output
-        self.console_output = console_output
         self.mongo_output = mongo_output
         self.sql_output = sql_output
+
+        # Display settings
         self.show_date = show_date
         self.show_time = show_time
         self.show_timezone = show_timezone
-        self.mongo_uri = mongo_uri
-        self.mongo_database_name = mongo_database_name
-        self.mongo_collection_name = mongo_collection_name
+
+        # File paths and configurations
         self.file_path = file_path
         self.json_path = json_path
         self.sql_path = sql_path
         self.sql_table_name = sql_table_name
+
+        # MongoDB configuration
+        self.mongo_uri = mongo_uri
+        self.mongo_database_name = mongo_database_name
+        self.mongo_collection_name = mongo_collection_name
+
+        # Notification settings
         self.notify_services = notify_services or []
+        self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
         self.notify_title = notify_title
         self.notify_format = notify_format
-        self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
+
+        # Size limits and buffering
         self.max_file_size_mb = max_file_size_mb
         self.max_json_size_mb = max_json_size_mb
         self.max_sql_size_mb = max_sql_size_mb
         self.enable_backup = enable_backup
         self.buffer_size = buffer_size
+
+        # Computed values
         self.max_level_width = max(len(level) for level in self.LOG_LEVELS)
+
+        # Internal state (private)
         self._mongo_client = None
         self._apprise = None
         self._notify_executor = None
@@ -154,6 +183,7 @@ class Tamga:
         self._color_cache = {}
         self._json_file_handle = None
         self._file_path_handle = None
+
         self._init_services()
 
     def _init_services(self):

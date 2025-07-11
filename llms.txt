@@ -45,7 +45,48 @@ logger.critical("Database connection lost")
 
 ## Configuration Parameters
 
-### Display Settings
+### Quick Reference
+
+#### Output Configuration
+- `console_output`: bool = True - Enable logging to console
+- `colored_output`: bool = True - Enable colored console output
+- `file_output`: bool = False - Enable logging to a file
+- `json_output`: bool = False - Enable logging to a JSON file
+- `mongo_output`: bool = False - Enable logging to MongoDB
+- `sql_output`: bool = False - Enable logging to SQL database
+
+#### Display Settings
+- `show_date`: bool = True - Show date in console logs
+- `show_time`: bool = True - Show time in console logs
+- `show_timezone`: bool = False - Show timezone in console logs
+
+#### File Paths and Configurations
+- `file_path`: str = "tamga.log" - Path to the log file
+- `json_path`: str = "tamga.json" - Path to the JSON log file
+- `sql_path`: str = "tamga.db" - Path to the SQL log file
+- `sql_table_name`: str = "logs" - SQL table name for logs
+
+#### MongoDB Configuration
+- `mongo_uri`: str = None - MongoDB connection URI
+- `mongo_database_name`: str = "tamga" - MongoDB database name
+- `mongo_collection_name`: str = "logs" - MongoDB collection name
+
+#### Notification Settings
+- `notify_services`: list = None - List of Apprise notification service URLs
+- `notify_levels`: list = [] - List of log levels to send notifications for (default includes NOTIFY)
+- `notify_title`: str = "{appname}: {level} - {date}" - Template for notification titles
+- `notify_format`: str = "text" - Notification format type (text/markdown/html)
+
+#### Size Limits and Buffering
+- `max_file_size_mb`: int = 10 - Maximum size in MB for log file
+- `max_json_size_mb`: int = 10 - Maximum size in MB for JSON file
+- `max_sql_size_mb`: int = 50 - Maximum size in MB for SQL file
+- `enable_backup`: bool = True - Enable backup when max size is reached
+- `buffer_size`: int = 50 - Number of logs to buffer before writing to file
+
+### Configuration Examples
+
+#### Display Settings
 
 ```python
 logger = Tamga(
@@ -60,7 +101,7 @@ logger = Tamga(
 )
 ```
 
-### Output Destinations
+#### Output Destinations
 
 ```python
 logger = Tamga(
@@ -80,7 +121,7 @@ logger = Tamga(
 )
 ```
 
-### Performance Settings
+#### Performance Settings
 
 ```python
 logger = Tamga(
@@ -95,7 +136,7 @@ logger = Tamga(
 )
 ```
 
-### MongoDB Configuration
+#### MongoDB Configuration
 
 ```python
 logger = Tamga(
@@ -106,7 +147,7 @@ logger = Tamga(
 )
 ```
 
-### Notification Configuration
+#### Notification Configuration
 
 ```python
 logger = Tamga(
