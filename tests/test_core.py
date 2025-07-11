@@ -167,7 +167,7 @@ class TestTamgaCore(unittest.TestCase):
             console_output=False,
             file_output=True,
             file_path=self.file_path,
-            max_log_size=0.001,  # 1KB
+            max_log_size_mb=0.001,  # 1KB
             enable_backup=True,
             buffer_size=1,
         )

@@ -10,7 +10,7 @@ logger = Tamga(
     # File logging with rotation and backup
     file_output=True,
     file_path="logs/app.log",
-    max_log_size=50,  # 50 MB max file size
+    max_log_size_mb=50,  # 50 MB max file size
     enable_backup=True,  # Enable backup on rotation
     # JSON logging for log aggregation
     json_output=True,

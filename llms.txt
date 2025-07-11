@@ -88,7 +88,7 @@ logger = Tamga(
     buffer_size=50,         # Logs to buffer before writing (default: 50)
 
     # File rotation (in MB)
-    max_log_size=10,         # Max log file size (default: 10)
+    max_log_size_mb=10,         # Max log file size (default: 10)
     max_json_size_mb=10,        # Max JSON file size (default: 10)
     max_sql_size_mb=50,         # Max SQLite size (default: 50)
     enable_backup=True,     # Create backups on rotation (default: True)
@@ -261,7 +261,7 @@ logger = Tamga(
     # File logging with rotation
     file_output=True,
     file_path="logs/app.log",
-    max_log_size=50,
+    max_log_size_mb=50,
     enable_backup=True,
 
     # JSON for log aggregation
@@ -414,7 +414,7 @@ def log_with_context(message, level="info"):
 
 ## File Rotation
 
-When a file reaches `max_log_size`:
+When a file reaches `max_log_size_mb`:
 
 1. If `enable_backup=True`, creates timestamped backup:
    - `tamga.log` → `tamga.log.20250628_143022.bak`
@@ -509,7 +509,7 @@ logger = Tamga(
     # Always log to file
     file_output=True,
     file_path="logs/app.log",
-    max_log_size=50,
+    max_log_size_mb=50,
 
     # JSON for log aggregation
     json_output=True,
