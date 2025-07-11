@@ -8,24 +8,24 @@ from tamga import Tamga
 # Advanced logger setup for production-like environments
 logger = Tamga(
     # File logging with rotation and backup
-    log_to_file=True,
-    log_file="logs/app.log",
+    file_output=True,
+    json_path="logs/app.log",
     max_log_size=50,  # 50 MB max file size
     enable_backup=True,  # Enable backup on rotation
     # JSON logging for log aggregation
-    log_to_json=True,
+    json_output=True,
     log_json="logs/app.json",
-    max_json_size=50,
+    max_json_size_mb=50,
     # SQLite logging for analytics
-    log_to_sql=True,
-    log_sql="logs/app.db",
-    sql_table="logs",
-    max_sql_size=100,
+    sql_output=True,
+    sql_path="logs/app.db",
+    sql_table_name="logs",
+    max_sql_size_mb=100,
     # Performance
     buffer_size=200,  # Large buffer for high throughput
-    log_to_console=False,  # Disable console for speed
+    console_output=False,  # Disable console for speed
     # MongoDB for centralized logging
-    log_to_mongo=bool(os.getenv("MONGO_URI")),
+    mongo_output=bool(os.getenv("MONGO_URI")),
     mongo_uri=os.getenv("MONGO_URI", ""),
     # Multi-service notifications for critical events
     notify_services=[

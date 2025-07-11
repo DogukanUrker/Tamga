@@ -24,29 +24,29 @@ class Tamga:
     LOG_LEVELS = LOG_LEVELS
 
     __slots__ = [
-        "is_colored",
-        "log_to_file",
-        "log_to_json",
-        "log_to_console",
-        "log_to_mongo",
-        "log_to_sql",
-        "show_day",
+        "colored_output",
+        "file_output",
+        "json_output",
+        "console_output",
+        "mongo_output",
+        "sql_output",
+        "show_date",
         "show_time",
         "show_timezone",
         "mongo_uri",
         "mongo_database_name",
         "mongo_collection_name",
-        "log_file",
+        "json_path",
         "log_json",
-        "log_sql",
-        "sql_table",
+        "sql_path",
+        "sql_table_name",
         "notify_services",
         "notify_levels",
         "notify_title",
         "notify_format",
         "max_log_size",
-        "max_json_size",
-        "max_sql_size",
+        "max_json_size_mb",
+        "max_sql_size_mb",
         "enable_backup",
         "buffer_size",
         "max_level_width",
@@ -58,34 +58,34 @@ class Tamga:
         "_buffer_lock",
         "_color_cache",
         "_json_file_handle",
-        "_log_file_handle",
+        "_json_path_handle",
     ]
 
     def __init__(
         self,
-        is_colored: bool = True,
-        log_to_file: bool = False,
-        log_to_json: bool = False,
-        log_to_console: bool = True,
-        log_to_mongo: bool = False,
-        log_to_sql: bool = False,
-        show_day: bool = True,
+        colored_output: bool = True,
+        file_output: bool = False,
+        json_output: bool = False,
+        console_output: bool = True,
+        mongo_output: bool = False,
+        sql_output: bool = False,
+        show_date: bool = True,
         show_time: bool = True,
         show_timezone: bool = False,
         mongo_uri: str = None,
         mongo_database_name: str = "tamga",
         mongo_collection_name: str = "logs",
-        log_file: str = "tamga.log",
+        json_path: str = "tamga.log",
         log_json: str = "tamga.json",
-        log_sql: str = "tamga.db",
-        sql_table: str = "logs",
+        sql_path: str = "tamga.db",
+        sql_table_name: str = "logs",
         notify_services: list = None,
         notify_levels: list = [],
         notify_title: str = "{appname}: {level} - {date}",
         notify_format: str = "text",
         max_log_size: int = 10,
-        max_json_size: int = 10,
-        max_sql_size: int = 50,
+        max_json_size_mb: int = 10,
+        max_sql_size_mb: int = 50,
         enable_backup: bool = True,
         buffer_size: int = 50,
     ):
@@ -93,55 +93,55 @@ class Tamga:
         Initialize Tamga with optional features.
 
         Args:
-            is_colored: Enable colored console output (default: True)
-            log_to_file: Enable logging to a file (default: False)
-            log_to_json: Enable logging to a JSON file (default: False)
-            log_to_console: Enable logging to console (default: True)
-            log_to_mongo: Enable logging to MongoDB (default: False)
-            log_to_sql: Enable logging to SQL database (default: False)
-            show_day: Show day in console logs (default: True)
+            colored_output: Enable colored console output (default: True)
+            file_output: Enable logging to a file (default: False)
+            json_output: Enable logging to a JSON file (default: False)
+            console_output: Enable logging to console (default: True)
+            mongo_output: Enable logging to MongoDB (default: False)
+            sql_output: Enable logging to SQL database (default: False)
+            show_date: Show day in console logs (default: True)
             show_time: Show time in console logs (default: True)
             show_timezone: Show timezone in console logs (default: False)
             mongo_uri: MongoDB connection URI
             mongo_database_name: MongoDB database name (default: "tamga")
             mongo_collection_name: MongoDB collection name (default: "logs")
-            log_file: Path to the log file (default: "tamga.log")
+            json_path: Path to the log file (default: "tamga.log")
             log_json: Path to the JSON log file (default: "tamga.json")
-            log_sql: Path to the SQL log file (default: "tamga.db")
-            sql_table: SQL table name for logs (default: "logs")
+            sql_path: Path to the SQL log file (default: "tamga.db")
+            sql_table_name: SQL table name for logs (default: "logs")
             notify_services: List of Apprise notification service URLs
             notify_levels: List of log levels to send notifications for (default: includes NOTIFY)
             notify_title: Template for notification titles (default: "{appname}: {level} - {date}")
             notify_format: Notification format type - text/markdown/html (default: "text")
             max_log_size: Maximum size in MB for log file (default: 10)
-            max_json_size: Maximum size in MB for JSON file (default: 10)
-            max_sql_size: Maximum size in MB for SQL file (default: 50)
+            max_json_size_mb: Maximum size in MB for JSON file (default: 10)
+            max_sql_size_mb: Maximum size in MB for SQL file (default: 50)
             enable_backup: Enable backup when max size is reached (default: True)
             buffer_size: Number of logs to buffer before writing to file (default: 50)
         """
-        self.is_colored = is_colored
-        self.log_to_file = log_to_file
-        self.log_to_json = log_to_json
-        self.log_to_console = log_to_console
-        self.log_to_mongo = log_to_mongo
-        self.log_to_sql = log_to_sql
-        self.show_day = show_day
+        self.colored_output = colored_output
+        self.file_output = file_output
+        self.json_output = json_output
+        self.console_output = console_output
+        self.mongo_output = mongo_output
+        self.sql_output = sql_output
+        self.show_date = show_date
         self.show_time = show_time
         self.show_timezone = show_timezone
         self.mongo_uri = mongo_uri
         self.mongo_database_name = mongo_database_name
         self.mongo_collection_name = mongo_collection_name
-        self.log_file = log_file
+        self.json_path = json_path
         self.log_json = log_json
-        self.log_sql = log_sql
-        self.sql_table = sql_table
+        self.sql_path = sql_path
+        self.sql_table_name = sql_table_name
         self.notify_services = notify_services or []
         self.notify_title = notify_title
         self.notify_format = notify_format
         self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
         self.max_log_size = max_log_size
-        self.max_json_size = max_json_size
-        self.max_sql_size = max_sql_size
+        self.max_json_size_mb = max_json_size_mb
+        self.max_sql_size_mb = max_sql_size_mb
         self.enable_backup = enable_backup
         self.buffer_size = buffer_size
         self.max_level_width = max(len(level) for level in self.LOG_LEVELS)
@@ -153,27 +153,27 @@ class Tamga:
         self._buffer_lock = threading.Lock()
         self._color_cache = {}
         self._json_file_handle = None
-        self._log_file_handle = None
+        self._json_path_handle = None
         self._init_services()
 
     def _init_services(self):
         """Initialize external services and create necessary files."""
-        if self.log_to_mongo:
+        if self.mongo_output:
             self._init_mongo()
 
-        if self.log_to_file:
-            self._ensure_file_exists(self.log_file)
+        if self.file_output:
+            self._ensure_file_exists(self.json_path)
             try:
-                self._log_file_handle = open(
-                    self.log_file, "a", encoding="utf-8", buffering=8192
+                self._json_path_handle = open(
+                    self.json_path, "a", encoding="utf-8", buffering=8192
                 )
             except Exception:
                 pass
 
-        if self.log_to_json:
+        if self.json_output:
             self._init_json_file()
 
-        if self.log_to_sql:
+        if self.sql_output:
             self._init_sql_db()
 
     def _init_mongo(self):
@@ -274,10 +274,10 @@ class Tamga:
 
     def _init_sql_db(self):
         """Initialize SQLite database."""
-        self._ensure_file_exists(self.log_sql)
-        with sqlite3.connect(self.log_sql) as conn:
+        self._ensure_file_exists(self.sql_path)
+        with sqlite3.connect(self.sql_path) as conn:
             conn.execute(
-                f"""CREATE TABLE IF NOT EXISTS {self.sql_table}
+                f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
                 (level TEXT, message TEXT, date TEXT, time TEXT,
                 timezone TEXT, timestamp REAL)"""
             )
@@ -291,7 +291,7 @@ class Tamga:
     def _format_timestamp(self) -> str:
         """Format timestamp string based on settings."""
         parts = []
-        if self.show_day:
+        if self.show_date:
             parts.append(current_date())
         if self.show_time:
             parts.append(current_time())
@@ -301,7 +301,7 @@ class Tamga:
 
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
-        if self.log_to_console:
+        if self.console_output:
             self._write_to_console(message, level, color)
 
     def log(self, message: str, level: str, color: str) -> None:
@@ -320,16 +320,16 @@ class Tamga:
             "unix_timestamp": current_timestamp(),
         }
 
-        if self.log_to_console:
+        if self.console_output:
             self._write_to_console(message, level, color)
 
-        if self.log_to_file:
+        if self.file_output:
             self._buffer_file_write(log_data)
 
-        if self.log_to_json:
+        if self.json_output:
             self._buffer_json_write(log_data)
 
-        if self.log_to_sql:
+        if self.sql_output:
             self._write_to_sql(log_data)
 
         if level in self.notify_levels and self.notify_services:
@@ -338,7 +338,7 @@ class Tamga:
 
             self._send_notification_async(message, level)
 
-        if self.log_to_mongo:
+        if self.mongo_output:
             self._write_to_mongo_async(log_data)
 
     def _buffer_file_write(self, log_data: Dict[str, Any]):
@@ -360,18 +360,18 @@ class Tamga:
         if not self._file_buffer:
             return
 
-        self._handle_file_rotation(self.log_file, self.max_log_size)
+        self._handle_file_rotation(self.json_path, self.max_log_size)
 
         try:
-            if self._log_file_handle and not self._log_file_handle.closed:
+            if self._json_path_handle and not self._json_path_handle.closed:
                 for log_data in self._file_buffer:
                     file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
-                    self._log_file_handle.write(
+                    self._json_path_handle.write(
                         f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
                     )
-                self._log_file_handle.flush()
+                self._json_path_handle.flush()
             else:
-                with open(self.log_file, "a", encoding="utf-8") as f:
+                with open(self.json_path, "a", encoding="utf-8") as f:
                     for log_data in self._file_buffer:
                         file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                         f.write(
@@ -386,7 +386,7 @@ class Tamga:
         if not self._json_buffer:
             return
 
-        self._handle_file_rotation(self.log_json, self.max_json_size)
+        self._handle_file_rotation(self.log_json, self.max_json_size_mb)
 
         try:
             with open(self.log_json, "r+", encoding="utf-8") as f:
@@ -431,7 +431,7 @@ class Tamga:
 
     def _write_to_console(self, message: str, level: str, color: str):
         """Write formatted log entry to console."""
-        if not self.is_colored:
+        if not self.colored_output:
             timestamp = self._format_timestamp()
             if timestamp:
                 print(f"[ {timestamp} ]  {level:<{self.max_level_width}}  {message}")
@@ -443,12 +443,12 @@ class Tamga:
 
         output_parts = []
 
-        if self.show_day or self.show_time or self.show_timezone:
+        if self.show_date or self.show_time or self.show_timezone:
             output_parts.append(f"{Color.text('gray')}[{Color.end_code}")
 
             content_parts = []
 
-            if self.show_day:
+            if self.show_date:
                 content_parts.append(
                     f"{Color.text('indigo')}{current_date()}{Color.end_code}"
                 )
@@ -483,12 +483,12 @@ class Tamga:
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
         """Write log entry to SQL database."""
-        self._handle_file_rotation(self.log_sql, self.max_sql_size)
+        self._handle_file_rotation(self.sql_path, self.max_sql_size_mb)
 
         try:
-            with sqlite3.connect(self.log_sql) as conn:
+            with sqlite3.connect(self.sql_path) as conn:
                 conn.execute(
-                    f"INSERT INTO {self.sql_table} VALUES (?, ?, ?, ?, ?, ?)",
+                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?)",
                     (
                         log_data["level"],
                         log_data["message"],
@@ -557,9 +557,9 @@ class Tamga:
         if not self._check_file_size(filepath, max_size_mb):
             return
 
-        if filepath == self.log_file and self._log_file_handle:
-            self._log_file_handle.close()
-            self._log_file_handle = None
+        if filepath == self.json_path and self._json_path_handle:
+            self._json_path_handle.close()
+            self._json_path_handle = None
 
         if self.enable_backup:
             self._create_backup(filepath)
@@ -570,13 +570,13 @@ class Tamga:
                     json.dump([], f)
             elif filepath.endswith(".db"):
                 with sqlite3.connect(filepath) as conn:
-                    conn.execute(f"DELETE FROM {self.sql_table}")
+                    conn.execute(f"DELETE FROM {self.sql_table_name}")
             else:
                 open(filepath, "w", encoding="utf-8").close()
 
-            if filepath == self.log_file:
-                self._log_file_handle = open(
-                    self.log_file, "a", encoding="utf-8", buffering=8192
+            if filepath == self.json_path:
+                self._json_path_handle = open(
+                    self.json_path, "a", encoding="utf-8", buffering=8192
                 )
         except Exception as e:
             self._log_internal(f"Failed to rotate file: {e}", "ERROR", "red")
@@ -596,8 +596,8 @@ class Tamga:
             if self._notify_executor:
                 self._notify_executor.shutdown(wait=False)
 
-            if self._log_file_handle and not self._log_file_handle.closed:
-                self._log_file_handle.close()
+            if self._json_path_handle and not self._json_path_handle.closed:
+                self._json_path_handle.close()
         except Exception:
             pass
 

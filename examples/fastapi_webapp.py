@@ -7,12 +7,12 @@ from tamga import Tamga
 
 app = FastAPI()
 logger = Tamga(
-    log_to_console=True,
-    log_to_file=True,
-    log_file="fastapi_app.log",
+    console_output=True,
+    file_output=True,
+    json_path="fastapi_app.log",
     buffer_size=10,
     show_time=True,
-    is_colored=True,
+    colored_output=True,
 )
 
 

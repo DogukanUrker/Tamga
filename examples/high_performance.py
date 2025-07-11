@@ -11,10 +11,10 @@ from tamga import Tamga
 NUM_LOGS = 1_000_000  # One million log entries
 
 logger = Tamga(
-    log_to_file=True,
-    log_file="biglog.log",
+    file_output=True,
+    json_path="biglog.log",
     max_log_size=100,  # 100 MB max file size
-    log_to_console=False,  # Disable console for max speed
+    console_output=False,  # Disable console for max speed
     buffer_size=10_000,  # Large buffer for throughput
 )
 
