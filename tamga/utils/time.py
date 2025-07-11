@@ -9,27 +9,27 @@ _DATE_FORMAT = "%d.%m.%y"
 _TIME_FORMAT = "%H:%M:%S"
 
 
-def currentDate() -> str:
+def current_date() -> str:
     """Get current date in DD.MM.YY format."""
     return datetime.now().strftime(_DATE_FORMAT)
 
 
-def currentTime() -> str:
+def current_time() -> str:
     """Get current time in HH:MM:SS format."""
     return datetime.now().strftime(_TIME_FORMAT)
 
 
-def currentTimeZone() -> str:
+def current_timezone() -> str:
     """Get current timezone abbreviation."""
     return tzname[0]
 
 
-def currentTimeStamp() -> float:
+def current_timestamp() -> float:
     """Get current Unix timestamp."""
     return datetime.now().timestamp()
 
 
-def formatTimestamp(include_timezone: bool = True) -> str:
+def format_timestamp(include_timezone: bool = True) -> str:
     """
     Format complete timestamp string.
 
@@ -39,7 +39,7 @@ def formatTimestamp(include_timezone: bool = True) -> str:
     Returns:
         Formatted timestamp string
     """
-    parts = [currentDate(), currentTime()]
+    parts = [current_date(), current_time()]
     if include_timezone:
-        parts.append(currentTimeZone())
+        parts.append(current_timezone())
     return " | ".join(parts)

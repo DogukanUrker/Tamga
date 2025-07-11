@@ -64,14 +64,14 @@ pip install tamga[all]              # All features
 ```python
 logger = Tamga(
     # Display settings
-    isColored=True,        # Colored output
-    showTime=True,         # Include timestamp
-    showTimezone=False,    # Include timezone
+    is_colored=True,        # Colored output
+    show_time=True,         # Include timestamp
+    show_timezone=False,    # Include timezone
 
     # Output destinations
-    logToFile=True,        # Log to file
-    logFile="app.log",     # Log file path
-    bufferSize=50,         # Buffer size for performance
+    log_to_file=True,        # Log to file
+    log_file="app.log",     # Log file path
+    buffer_size=50,         # Buffer size for performance
 )
 ```
 
@@ -90,26 +90,26 @@ logger.dir("User action",
 ```python
 logger = Tamga(
     # File rotation
-    logToFile=True,
-    maxLogSize=50,         # 50MB max file size
-    enableBackup=True,     # Create backups
+    log_to_file=True,
+    max_log_size=50,         # 50MB max file size
+    enable_backup=True,     # Create backups
 
     # Performance
-    bufferSize=200,        # Larger buffer for production
-    logToConsole=False,    # Disable console for speed
+    buffer_size=200,        # Larger buffer for production
+    log_to_console=False,    # Disable console for speed
 
     # External services
-    logToMongo=True,
-    mongoURI="mongodb://...",
+    log_to_mongo=True,
+    mongo_uri="mongodb://...",
 
     # Multi-service notifications
-    notifyServices=[
+    notify_services=[
         "discord://webhook_id/webhook_token",
         "slack://tokenA/tokenB/tokenC/#alerts",
         "mailto://user:pass@smtp.gmail.com:587/?to=alerts@company.com",
         "twilio://SID:Token@+1234567890/+0987654321",
     ],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
+    notify_levels=["CRITICAL", "ERROR", "NOTIFY"],
 )
 ```
 
@@ -136,13 +136,13 @@ logger = Tamga(
 ```python
 # Configure notification services (supports 80+ services via Apprise)
 logger = Tamga(
-    notifyServices=[
+    notify_services=[
         "discord://webhook_id/webhook_token",
         "slack://tokenA/tokenB/tokenC/#channel",
     ],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
-    notifyTitle="{appname}: {level} Alert",
-    notifyFormat="markdown",  # text, markdown, or html
+    notify_levels=["CRITICAL", "ERROR", "NOTIFY"],
+    notify_title="{appname}: {level} Alert",
+    notify_format="markdown",  # text, markdown, or html
 )
 
 # Send notification
@@ -165,7 +165,7 @@ logger.flush()
 ```
 
 ### File Rotation
-When log files reach `maxLogSize`, Tamga automatically:
+When log files reach `max_log_size`, Tamga automatically:
 - Creates timestamped backups (if enabled)
 - Clears the original file
 - Continues logging seamlessly

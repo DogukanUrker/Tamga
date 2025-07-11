@@ -1,254 +1,222 @@
 import json
 import os
 import sqlite3
-import sys
-import tempfile
-import unittest
+from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tamga import Tamga
 
 
-class TestTamgaCore(unittest.TestCase):
-    """Test core Tamga functionality without external dependencies."""
-
-    def setUp(self):
-        """Set up test environment with temporary directory."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.log_file = os.path.join(self.temp_dir, "test.log")
-        self.json_file = os.path.join(self.temp_dir, "test.json")
-        self.sql_file = os.path.join(self.temp_dir, "test.db")
-
-    def tearDown(self):
-        """Clean up temporary files."""
-        import shutil
-
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_console_logging(self):
-        """Test basic console logging functionality."""
-        # Just ensure no exceptions are raised
-        logger = Tamga(logToConsole=True)
-        logger.info("Test info message")
-        logger.warning("Test warning")
-        logger.error("Test error")
-        logger.success("Test success")
-        logger.debug("Test debug")
-        logger.critical("Test critical")
-
-    def test_console_logging_no_color(self):
-        """Test console logging without colors."""
-        logger = Tamga(logToConsole=True, isColored=False)
-        logger.info("Test without colors")
-
-    def test_file_logging(self):
-        """Test file logging with buffering."""
-        logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=2
-        )
-
-        # Write less than buffer size
-        logger.info("First message")
-        self.assertTrue(os.path.exists(self.log_file))
-        self.assertEqual(os.path.getsize(self.log_file), 0)
-
-        # Trigger buffer flush
-        logger.info("Second message")
-        logger.flush()
-
-        # Check file contents
-        self.assertTrue(os.path.exists(self.log_file))
-        with open(self.log_file, "r") as f:
-            content = f.read()
-            self.assertIn("First message", content)
-            self.assertIn("Second message", content)
-            self.assertIn("INFO", content)
-
-    def test_json_logging(self):
-        """Test JSON logging functionality."""
-        logger = Tamga(
-            logToConsole=False, logToJSON=True, logJSON=self.json_file, bufferSize=1
-        )
-
-        logger.error("JSON error message")
-        logger.flush()
-
-        # Verify JSON structure
-        with open(self.json_file, "r") as f:
-            data = json.load(f)
-            self.assertIsInstance(data, list)
-            self.assertEqual(len(data), 1)
-            self.assertEqual(data[0]["level"], "ERROR")
-            self.assertEqual(data[0]["message"], "JSON error message")
-            self.assertIn("timestamp", data[0])
-
-    def test_sql_logging(self):
-        """Test SQLite logging functionality."""
-        logger = Tamga(
-            logToConsole=False,
-            logToSQL=True,
-            logSQL=self.sql_file,
-            sqlTable="test_logs",
-        )
-
-        logger.warning("SQL warning message")
-
-        # Verify SQL data
-        conn = sqlite3.connect(self.sql_file)
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM test_logs WHERE level='WARNING'")
-        rows = cursor.fetchall()
-        conn.close()
-
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0][0], "WARNING")  # level
-        self.assertEqual(rows[0][1], "SQL warning message")  # message
-
-    def test_multiple_outputs(self):
-        """Test logging to multiple outputs simultaneously."""
-        logger = Tamga(
-            logToConsole=True,
-            logToFile=True,
-            logToJSON=True,
-            logFile=self.log_file,
-            logJSON=self.json_file,
-            bufferSize=1,
-        )
-
-        logger.success("Multi-output message")
-        logger.flush()
-
-        # Check both files exist and contain the message
-        self.assertTrue(os.path.exists(self.log_file))
-        self.assertTrue(os.path.exists(self.json_file))
-
-        with open(self.log_file, "r") as f:
-            self.assertIn("Multi-output message", f.read())
-
-        with open(self.json_file, "r") as f:
-            data = json.load(f)
-            self.assertEqual(data[0]["message"], "Multi-output message")
-
-    def test_custom_log_level(self):
-        """Test custom log levels."""
-        logger = Tamga(logToConsole=True)
-        logger.custom("Custom message", "CUSTOM", "purple")
-        # Just ensure no exception is raised
-
-    def test_dir_method(self):
-        """Test structured logging with dir method."""
-        logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=1
-        )
-
-        logger.dir("User action", user_id=123, action="login", success=True)
-        logger.flush()
-
-        with open(self.log_file, "r") as f:
-            content = f.read()
-            self.assertIn("User action", content)
-            self.assertIn("user_id", content)
-            self.assertIn("123", content)
-
-    def test_file_rotation(self):
-        """Test file rotation when size limit is reached."""
-        logger = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=self.log_file,
-            maxLogSize=0.001,  # 1KB
-            enableBackup=True,
-            bufferSize=1,
-        )
-
-        # Write enough data to trigger rotation
-        for i in range(100):
-            logger.info(f"This is a long message to fill up the file quickly: {i}" * 10)
-        logger.flush()
-
-        # Check if backup was created
-        backup_files = [f for f in os.listdir(self.temp_dir) if f.endswith(".bak")]
-        self.assertGreater(len(backup_files), 0)
-
-    def test_flush_on_deletion(self):
-        """Test that buffers are flushed when logger is deleted."""
-        logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=10
-        )
-
-        logger.info("Message before deletion")
-        del logger  # Should trigger flush
-
-        with open(self.log_file, "r") as f:
-            self.assertIn("Message before deletion", f.read())
-
-    def test_timezone_toggle(self):
-        """Test timezone display toggle."""
-        # Without timezone
-        logger1 = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=self.log_file,
-            showTimezone=False,
-            bufferSize=1,
-        )
-        logger1.info("No timezone")
-        logger1.flush()
-
-        # With timezone
-        log_file2 = os.path.join(self.temp_dir, "test2.log")
-        logger2 = Tamga(
-            logToConsole=False,
-            logToFile=True,
-            logFile=log_file2,
-            showTimezone=True,
-            bufferSize=1,
-        )
-        logger2.info("With timezone")
-        logger2.flush()
-
-        # Check content difference
-        with open(self.log_file, "r") as f1, open(log_file2, "r") as f2:
-            content1 = f1.read()
-            content2 = f2.read()
-            # The one with timezone should be longer
-            self.assertLess(len(content1), len(content2))
-
-    def test_all_log_levels(self):
-        """Test all available log level methods."""
-        logger = Tamga(
-            logToConsole=False, logToFile=True, logFile=self.log_file, bufferSize=1
-        )
-
-        # Test all methods
-        logger.info("Info test")
-        logger.warning("Warning test")
-        logger.error("Error test")
-        logger.success("Success test")
-        logger.debug("Debug test")
-        logger.critical("Critical test")
-        logger.database("Database test")
-        logger.metric("Metric test")
-        logger.trace("Trace test")
-        logger.flush()
-
-        with open(self.log_file, "r") as f:
-            content = f.read()
-            for level in [
-                "INFO",
-                "WARNING",
-                "ERROR",
-                "SUCCESS",
-                "DEBUG",
-                "CRITICAL",
-                "DATABASE",
-                "METRIC",
-                "TRACE",
-            ]:
-                self.assertIn(level, content)
+def test_console_logging():
+    """Ensure console logging works without errors."""
+    logger = Tamga(log_to_console=True)
+    logger.info("Test info message")
+    logger.warning("Test warning")
+    logger.error("Test error")
+    logger.success("Test success")
+    logger.debug("Test debug")
+    logger.critical("Test critical")
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+def test_console_logging_no_color():
+    """Console logging without colors should not raise."""
+    logger = Tamga(log_to_console=True, is_colored=False)
+    logger.info("Test without colors")
+
+
+def test_file_logging(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    logger = Tamga(
+        log_to_console=False, log_to_file=True, log_file=str(log_file), buffer_size=2
+    )
+
+    logger.info("First message")
+    assert log_file.exists()
+    assert log_file.stat().st_size == 0
+
+    logger.info("Second message")
+    logger.flush()
+
+    assert log_file.exists()
+    content = log_file.read_text()
+    assert "First message" in content
+    assert "Second message" in content
+    assert "INFO" in content
+
+
+def test_json_logging(tmp_path: Path):
+    json_file = tmp_path / "test.json"
+    logger = Tamga(
+        log_to_console=False, log_to_json=True, log_json=str(json_file), buffer_size=1
+    )
+
+    logger.error("JSON error message")
+    logger.flush()
+
+    with json_file.open() as f:
+        data = json.load(f)
+        assert isinstance(data, list)
+        assert len(data) == 1
+        assert data[0]["level"] == "ERROR"
+        assert data[0]["message"] == "JSON error message"
+        assert "timestamp" in data[0]
+
+
+def test_sql_logging(tmp_path: Path):
+    sql_file = tmp_path / "test.db"
+    logger = Tamga(
+        log_to_console=False,
+        log_to_sql=True,
+        log_sql=str(sql_file),
+        sql_table="test_logs",
+    )
+
+    logger.warning("SQL warning message")
+
+    conn = sqlite3.connect(sql_file)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM test_logs WHERE level='WARNING'")
+    rows = cursor.fetchall()
+    conn.close()
+
+    assert len(rows) == 1
+    assert rows[0][0] == "WARNING"
+    assert rows[0][1] == "SQL warning message"
+
+
+def test_multiple_outputs(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    json_file = tmp_path / "test.json"
+    logger = Tamga(
+        log_to_console=True,
+        log_to_file=True,
+        log_to_json=True,
+        log_file=str(log_file),
+        log_json=str(json_file),
+        buffer_size=1,
+    )
+
+    logger.success("Multi-output message")
+    logger.flush()
+
+    assert log_file.exists()
+    assert json_file.exists()
+
+    assert "Multi-output message" in log_file.read_text()
+    with json_file.open() as f:
+        data = json.load(f)
+        assert data[0]["message"] == "Multi-output message"
+
+
+def test_custom_log_level():
+    logger = Tamga(log_to_console=True)
+    logger.custom("Custom message", "CUSTOM", "purple")
+
+
+def test_dir_method(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    logger = Tamga(
+        log_to_console=False, log_to_file=True, log_file=str(log_file), buffer_size=1
+    )
+
+    logger.dir("User action", user_id=123, action="login", success=True)
+    logger.flush()
+
+    content = log_file.read_text()
+    assert "User action" in content
+    assert "user_id" in content
+    assert "123" in content
+
+
+def test_file_rotation(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    logger = Tamga(
+        log_to_console=False,
+        log_to_file=True,
+        log_file=str(log_file),
+        max_log_size=0.001,
+        enable_backup=True,
+        buffer_size=1,
+    )
+
+    for i in range(100):
+        logger.info(f"This is a long message to fill up the file quickly: {i}" * 10)
+    logger.flush()
+
+    backup_files = [f for f in os.listdir(tmp_path) if f.endswith(".bak")]
+    assert len(backup_files) > 0
+
+
+def test_flush_on_deletion(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    logger = Tamga(
+        log_to_console=False, log_to_file=True, log_file=str(log_file), buffer_size=10
+    )
+
+    logger.info("Message before deletion")
+    del logger
+
+    assert "Message before deletion" in log_file.read_text()
+
+
+def test_timezone_toggle(tmp_path: Path):
+    log_file1 = tmp_path / "test.log"
+    logger1 = Tamga(
+        log_to_console=False,
+        log_to_file=True,
+        log_file=str(log_file1),
+        show_timezone=False,
+        buffer_size=1,
+    )
+    logger1.info("No timezone")
+    logger1.flush()
+
+    log_file2 = tmp_path / "test2.log"
+    logger2 = Tamga(
+        log_to_console=False,
+        log_to_file=True,
+        log_file=str(log_file2),
+        show_timezone=True,
+        buffer_size=1,
+    )
+    logger2.info("With timezone")
+    logger2.flush()
+
+    content1 = log_file1.read_text()
+    content2 = log_file2.read_text()
+    assert len(content1) < len(content2)
+
+
+def test_all_log_levels(tmp_path: Path):
+    log_file = tmp_path / "test.log"
+    logger = Tamga(
+        log_to_console=False, log_to_file=True, log_file=str(log_file), buffer_size=1
+    )
+
+    logger.info("Info test")
+    logger.warning("Warning test")
+    logger.error("Error test")
+    logger.success("Success test")
+    logger.debug("Debug test")
+    logger.critical("Critical test")
+    logger.database("Database test")
+    logger.metric("Metric test")
+    logger.trace("Trace test")
+    logger.flush()
+
+    content = log_file.read_text()
+    for level in [
+        "INFO",
+        "WARNING",
+        "ERROR",
+        "SUCCESS",
+        "DEBUG",
+        "CRITICAL",
+        "DATABASE",
+        "METRIC",
+        "TRACE",
+    ]:
+        assert level in content

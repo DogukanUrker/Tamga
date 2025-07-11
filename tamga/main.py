@@ -8,7 +8,12 @@ from typing import Any, Dict
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
-from .utils.time import currentDate, currentTime, currentTimeStamp, currentTimeZone
+from .utils.time import (
+    current_date,
+    current_time,
+    current_timestamp,
+    current_timezone,
+)
 
 
 class Tamga:
@@ -19,32 +24,32 @@ class Tamga:
     LOG_LEVELS = LOG_LEVELS
 
     __slots__ = [
-        "isColored",
-        "logToFile",
-        "logToJSON",
-        "logToConsole",
-        "logToMongo",
-        "logToSQL",
-        "showDay",
-        "showTime",
-        "showTimezone",
-        "mongoURI",
-        "mongoDatabaseName",
-        "mongoCollectionName",
-        "logFile",
-        "logJSON",
-        "logSQL",
-        "sqlTable",
-        "notifyServices",
-        "notifyLevels",
-        "notifyTitle",
-        "notifyFormat",
-        "maxLogSize",
-        "maxJsonSize",
-        "maxSqlSize",
-        "enableBackup",
-        "bufferSize",
-        "maxLevelWidth",
+        "is_colored",
+        "log_to_file",
+        "log_to_json",
+        "log_to_console",
+        "log_to_mongo",
+        "log_to_sql",
+        "show_day",
+        "show_time",
+        "show_timezone",
+        "mongo_uri",
+        "mongo_database_name",
+        "mongo_collection_name",
+        "log_file",
+        "log_json",
+        "log_sql",
+        "sql_table",
+        "notify_services",
+        "notify_levels",
+        "notify_title",
+        "notify_format",
+        "max_log_size",
+        "max_json_size",
+        "max_sql_size",
+        "enable_backup",
+        "buffer_size",
+        "max_level_width",
         "_mongo_client",
         "_apprise",
         "_notify_executor",
@@ -58,88 +63,90 @@ class Tamga:
 
     def __init__(
         self,
-        isColored: bool = True,
-        logToFile: bool = False,
-        logToJSON: bool = False,
-        logToConsole: bool = True,
-        logToMongo: bool = False,
-        logToSQL: bool = False,
-        showDay: bool = True,
-        showTime: bool = True,
-        showTimezone: bool = False,
-        mongoURI: str = None,
-        mongoDatabaseName: str = "tamga",
-        mongoCollectionName: str = "logs",
-        logFile: str = "tamga.log",
-        logJSON: str = "tamga.json",
-        logSQL: str = "tamga.db",
-        sqlTable: str = "logs",
-        notifyServices: list = None,
-        notifyLevels: list = [],
-        notifyTitle: str = "{appname}: {level} - {date}",
-        notifyFormat: str = "text",
-        maxLogSize: int = 10,
-        maxJsonSize: int = 10,
-        maxSqlSize: int = 50,
-        enableBackup: bool = True,
-        bufferSize: int = 50,
+        is_colored: bool = True,
+        log_to_file: bool = False,
+        log_to_json: bool = False,
+        log_to_console: bool = True,
+        log_to_mongo: bool = False,
+        log_to_sql: bool = False,
+        show_day: bool = True,
+        show_time: bool = True,
+        show_timezone: bool = False,
+        mongo_uri: str = None,
+        mongo_database_name: str = "tamga",
+        mongo_collection_name: str = "logs",
+        log_file: str = "tamga.log",
+        log_json: str = "tamga.json",
+        log_sql: str = "tamga.db",
+        sql_table: str = "logs",
+        notify_services: list = None,
+        notify_levels: list | None = None,
+        notify_title: str = "{appname}: {level} - {date}",
+        notify_format: str = "text",
+        max_log_size: int = 10,
+        max_json_size: int = 10,
+        max_sql_size: int = 50,
+        enable_backup: bool = True,
+        buffer_size: int = 50,
     ):
         """
         Initialize Tamga with optional features.
 
         Args:
-            isColored: Enable colored console output (default: True)
-            logToFile: Enable logging to a file (default: False)
-            logToJSON: Enable logging to a JSON file (default: False)
-            logToConsole: Enable logging to console (default: True)
-            logToMongo: Enable logging to MongoDB (default: False)
-            logToSQL: Enable logging to SQL database (default: False)
-            showDay: Show day in console logs (default: True)
-            showTime: Show time in console logs (default: True)
-            showTimezone: Show timezone in console logs (default: False)
-            mongoURI: MongoDB connection URI
-            mongoDatabaseName: MongoDB database name (default: "tamga")
-            mongoCollectionName: MongoDB collection name (default: "logs")
-            logFile: Path to the log file (default: "tamga.log")
-            logJSON: Path to the JSON log file (default: "tamga.json")
-            logSQL: Path to the SQL log file (default: "tamga.db")
-            sqlTable: SQL table name for logs (default: "logs")
-            notifyServices: List of Apprise notification service URLs
-            notifyLevels: List of log levels to send notifications for (default: includes NOTIFY)
-            notifyTitle: Template for notification titles (default: "{appname}: {level} - {date}")
-            notifyFormat: Notification format type - text/markdown/html (default: "text")
-            maxLogSize: Maximum size in MB for log file (default: 10)
-            maxJsonSize: Maximum size in MB for JSON file (default: 10)
-            maxSqlSize: Maximum size in MB for SQL file (default: 50)
-            enableBackup: Enable backup when max size is reached (default: True)
-            bufferSize: Number of logs to buffer before writing to file (default: 50)
+            is_colored: Enable colored console output (default: True)
+            log_to_file: Enable logging to a file (default: False)
+            log_to_json: Enable logging to a JSON file (default: False)
+            log_to_console: Enable logging to console (default: True)
+            log_to_mongo: Enable logging to MongoDB (default: False)
+            log_to_sql: Enable logging to SQL database (default: False)
+            show_day: Show day in console logs (default: True)
+            show_time: Show time in console logs (default: True)
+            show_timezone: Show timezone in console logs (default: False)
+            mongo_uri: MongoDB connection URI
+            mongo_database_name: MongoDB database name (default: "tamga")
+            mongo_collection_name: MongoDB collection name (default: "logs")
+            log_file: Path to the log file (default: "tamga.log")
+            log_json: Path to the JSON log file (default: "tamga.json")
+            log_sql: Path to the SQL log file (default: "tamga.db")
+            sql_table: SQL table name for logs (default: "logs")
+            notify_services: List of Apprise notification service URLs
+            notify_levels: List of log levels to send notifications for (default: includes NOTIFY)
+            notify_title: Template for notification titles (default: "{appname}: {level} - {date}")
+            notify_format: Notification format type - text/markdown/html (default: "text")
+            max_log_size: Maximum size in MB for log file (default: 10)
+            max_json_size: Maximum size in MB for JSON file (default: 10)
+            max_sql_size: Maximum size in MB for SQL file (default: 50)
+            enable_backup: Enable backup when max size is reached (default: True)
+            buffer_size: Number of logs to buffer before writing to file (default: 50)
         """
-        self.isColored = isColored
-        self.logToFile = logToFile
-        self.logToJSON = logToJSON
-        self.logToConsole = logToConsole
-        self.logToMongo = logToMongo
-        self.logToSQL = logToSQL
-        self.showDay = showDay
-        self.showTime = showTime
-        self.showTimezone = showTimezone
-        self.mongoURI = mongoURI
-        self.mongoDatabaseName = mongoDatabaseName
-        self.mongoCollectionName = mongoCollectionName
-        self.logFile = logFile
-        self.logJSON = logJSON
-        self.logSQL = logSQL
-        self.sqlTable = sqlTable
-        self.notifyServices = notifyServices or []
-        self.notifyTitle = notifyTitle
-        self.notifyFormat = notifyFormat
-        self.notifyLevels = list(set(notifyLevels + ["NOTIFY"]))
-        self.maxLogSize = maxLogSize
-        self.maxJsonSize = maxJsonSize
-        self.maxSqlSize = maxSqlSize
-        self.enableBackup = enableBackup
-        self.bufferSize = bufferSize
-        self.maxLevelWidth = max(len(level) for level in self.LOG_LEVELS)
+        self.is_colored = is_colored
+        self.log_to_file = log_to_file
+        self.log_to_json = log_to_json
+        self.log_to_console = log_to_console
+        self.log_to_mongo = log_to_mongo
+        self.log_to_sql = log_to_sql
+        self.show_day = show_day
+        self.show_time = show_time
+        self.show_timezone = show_timezone
+        self.mongo_uri = mongo_uri
+        self.mongo_database_name = mongo_database_name
+        self.mongo_collection_name = mongo_collection_name
+        self.log_file = log_file
+        self.log_json = log_json
+        self.log_sql = log_sql
+        self.sql_table = sql_table
+        self.notify_services = notify_services or []
+        self.notify_title = notify_title
+        self.notify_format = notify_format
+        if notify_levels is None:
+            notify_levels = []
+        self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
+        self.max_log_size = max_log_size
+        self.max_json_size = max_json_size
+        self.max_sql_size = max_sql_size
+        self.enable_backup = enable_backup
+        self.buffer_size = buffer_size
+        self.max_level_width = max(len(level) for level in self.LOG_LEVELS)
         self._mongo_client = None
         self._apprise = None
         self._notify_executor = None
@@ -153,22 +160,22 @@ class Tamga:
 
     def _init_services(self):
         """Initialize external services and create necessary files."""
-        if self.logToMongo:
+        if self.log_to_mongo:
             self._init_mongo()
 
-        if self.logToFile:
-            self._ensure_file_exists(self.logFile)
+        if self.log_to_file:
+            self._ensure_file_exists(self.log_file)
             try:
                 self._log_file_handle = open(
-                    self.logFile, "a", encoding="utf-8", buffering=8192
+                    self.log_file, "a", encoding="utf-8", buffering=8192
                 )
             except Exception:
                 pass
 
-        if self.logToJSON:
+        if self.log_to_json:
             self._init_json_file()
 
-        if self.logToSQL:
+        if self.log_to_sql:
             self._init_sql_db()
 
     def _init_mongo(self):
@@ -177,10 +184,10 @@ class Tamga:
             import motor.motor_asyncio
 
             client = motor.motor_asyncio.AsyncIOMotorClient(
-                self.mongoURI, tls=True, tlsAllowInvalidCertificates=True
+                self.mongo_uri, tls=True, tlsAllowInvalidCertificates=True
             )
-            self._mongo_client = client[self.mongoDatabaseName][
-                self.mongoCollectionName
+            self._mongo_client = client[self.mongo_database_name][
+                self.mongo_collection_name
             ]
             self._log_internal("Connected to MongoDB", "TAMGA", "lime")
         except Exception as e:
@@ -188,13 +195,13 @@ class Tamga:
 
     def _init_apprise(self):
         """Lazy initialize Apprise for performance."""
-        if self._apprise is None and self.notifyServices:
+        if self._apprise is None and self.notify_services:
             try:
                 import apprise
 
                 self._apprise = apprise.Apprise()
 
-                for service in self.notifyServices:
+                for service in self.notify_services:
                     self._apprise.add(service)
 
                 from concurrent.futures import ThreadPoolExecutor
@@ -204,7 +211,7 @@ class Tamga:
                 )
 
                 self._log_internal(
-                    f"Notification services initialized: {len(self.notifyServices)} services",
+                    f"Notification services initialized: {len(self.notify_services)} services",
                     "TAMGA",
                     "lime",
                 )
@@ -221,20 +228,20 @@ class Tamga:
 
     def _send_notification_async(self, message: str, level: str, title: str = None):
         """Send notification asynchronously without blocking."""
-        if not self.notifyServices or not self._apprise:
+        if not self.notify_services or not self._apprise:
             return
 
         def send():
             try:
-                final_title = title or self.notifyTitle.format(
-                    appname="Tamga", level=level, date=currentDate(), time=currentTime()
+                final_title = title or self.notify_title.format(
+                    appname="Tamga", level=level, date=current_date(), time=current_time()
                 )
                 formatted_message = self._apply_default_template(message, level)
 
                 self._apprise.notify(
                     body=formatted_message,
                     title=final_title,
-                    body_format=self.notifyFormat,
+                    body_format=self.notify_format,
                 )
             except Exception as e:
                 self._log_internal(f"Notification failed: {e}", "ERROR", "red")
@@ -250,7 +257,7 @@ class Tamga:
             from .utils.apprise import format_notification
 
             return format_notification(
-                message, level, currentDate(), currentTime(), self.notifyFormat
+                message, level, current_date(), current_time(), self.notify_format
             )
         except Exception as e:
             self._log_internal(
@@ -260,16 +267,16 @@ class Tamga:
 
     def _init_json_file(self):
         """Initialize JSON log file."""
-        if not os.path.exists(self.logJSON):
-            with open(self.logJSON, "w", encoding="utf-8") as f:
+        if not os.path.exists(self.log_json):
+            with open(self.log_json, "w", encoding="utf-8") as f:
                 json.dump([], f)
 
     def _init_sql_db(self):
         """Initialize SQLite database."""
-        self._ensure_file_exists(self.logSQL)
-        with sqlite3.connect(self.logSQL) as conn:
+        self._ensure_file_exists(self.log_sql)
+        with sqlite3.connect(self.log_sql) as conn:
             conn.execute(
-                f"""CREATE TABLE IF NOT EXISTS {self.sqlTable}
+                f"""CREATE TABLE IF NOT EXISTS {self.sql_table}
                 (level TEXT, message TEXT, date TEXT, time TEXT,
                 timezone TEXT, timestamp REAL)"""
             )
@@ -283,17 +290,17 @@ class Tamga:
     def _format_timestamp(self) -> str:
         """Format timestamp string based on settings."""
         parts = []
-        if self.showDay:
-            parts.append(currentDate())
-        if self.showTime:
-            parts.append(currentTime())
-        if self.showTimezone:
-            parts.append(currentTimeZone())
+        if self.show_day:
+            parts.append(current_date())
+        if self.show_time:
+            parts.append(current_time())
+        if self.show_timezone:
+            parts.append(current_timezone())
         return " | ".join(parts) if parts else ""
 
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
-        if self.logToConsole:
+        if self.log_to_console:
             self._write_to_console(message, level, color)
 
     def log(self, message: str, level: str, color: str) -> None:
@@ -306,45 +313,45 @@ class Tamga:
             "level": level,
             "color": color,
             "timestamp": self._format_timestamp(),
-            "date": currentDate(),
-            "time": currentTime(),
-            "timezone": currentTimeZone(),
-            "unix_timestamp": currentTimeStamp(),
+            "date": current_date(),
+            "time": current_time(),
+            "timezone": current_timezone(),
+            "unix_timestamp": current_timestamp(),
         }
 
-        if self.logToConsole:
+        if self.log_to_console:
             self._write_to_console(message, level, color)
 
-        if self.logToFile:
+        if self.log_to_file:
             self._buffer_file_write(log_data)
 
-        if self.logToJSON:
+        if self.log_to_json:
             self._buffer_json_write(log_data)
 
-        if self.logToSQL:
+        if self.log_to_sql:
             self._write_to_sql(log_data)
 
-        if level in self.notifyLevels and self.notifyServices:
+        if level in self.notify_levels and self.notify_services:
             if self._apprise is None:
                 self._init_apprise()
 
             self._send_notification_async(message, level)
 
-        if self.logToMongo:
+        if self.log_to_mongo:
             self._write_to_mongo_async(log_data)
 
     def _buffer_file_write(self, log_data: Dict[str, Any]):
         """Buffer file writes for better performance."""
         with self._buffer_lock:
             self._file_buffer.append(log_data)
-            if len(self._file_buffer) >= self.bufferSize:
+            if len(self._file_buffer) >= self.buffer_size:
                 self._flush_file_buffer()
 
     def _buffer_json_write(self, log_data: Dict[str, Any]):
         """Buffer JSON writes for better performance."""
         with self._buffer_lock:
             self._json_buffer.append(log_data)
-            if len(self._json_buffer) >= self.bufferSize:
+            if len(self._json_buffer) >= self.buffer_size:
                 self._flush_json_buffer()
 
     def _flush_file_buffer(self):
@@ -352,7 +359,7 @@ class Tamga:
         if not self._file_buffer:
             return
 
-        self._handle_file_rotation(self.logFile, self.maxLogSize)
+        self._handle_file_rotation(self.log_file, self.max_log_size)
 
         try:
             if self._log_file_handle and not self._log_file_handle.closed:
@@ -363,7 +370,7 @@ class Tamga:
                     )
                 self._log_file_handle.flush()
             else:
-                with open(self.logFile, "a", encoding="utf-8") as f:
+                with open(self.log_file, "a", encoding="utf-8") as f:
                     for log_data in self._file_buffer:
                         file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                         f.write(
@@ -378,10 +385,10 @@ class Tamga:
         if not self._json_buffer:
             return
 
-        self._handle_file_rotation(self.logJSON, self.maxJsonSize)
+        self._handle_file_rotation(self.log_json, self.max_json_size)
 
         try:
-            with open(self.logJSON, "r+", encoding="utf-8") as f:
+            with open(self.log_json, "r+", encoding="utf-8") as f:
                 f.seek(0, 2)
                 file_size = f.tell()
 
@@ -423,64 +430,64 @@ class Tamga:
 
     def _write_to_console(self, message: str, level: str, color: str):
         """Write formatted log entry to console."""
-        if not self.isColored:
+        if not self.is_colored:
             timestamp = self._format_timestamp()
             if timestamp:
-                print(f"[ {timestamp} ]  {level:<{self.maxLevelWidth}}  {message}")
+                print(f"[ {timestamp} ]  {level:<{self.max_level_width}}  {message}")
             else:
-                print(f"{level:<{self.maxLevelWidth}}  {message}")
+                print(f"{level:<{self.max_level_width}}  {message}")
             return
 
         text_color, bg_color = self._get_color_codes(color)
 
         output_parts = []
 
-        if self.showDay or self.showTime or self.showTimezone:
-            output_parts.append(f"{Color.text('gray')}[{Color.endCode}")
+        if self.show_day or self.show_time or self.show_timezone:
+            output_parts.append(f"{Color.text('gray')}[{Color.end_code}")
 
             content_parts = []
 
-            if self.showDay:
+            if self.show_day:
                 content_parts.append(
-                    f"{Color.text('indigo')}{currentDate()}{Color.endCode}"
+                    f"{Color.text('indigo')}{current_date()}{Color.end_code}"
                 )
 
-            if self.showTime:
+            if self.show_time:
                 content_parts.append(
-                    f"{Color.text('violet')}{currentTime()}{Color.endCode}"
+                    f"{Color.text('violet')}{current_time()}{Color.end_code}"
                 )
 
-            if self.showTimezone:
+            if self.show_timezone:
                 content_parts.append(
-                    f"{Color.text('purple')}{currentTimeZone()}{Color.endCode}"
+                    f"{Color.text('purple')}{current_timezone()}{Color.end_code}"
                 )
 
             if content_parts:
-                separator = f"{Color.text('gray')} | {Color.endCode}"
+                separator = f"{Color.text('gray')} | {Color.end_code}"
                 output_parts.append(separator.join(content_parts))
 
-            output_parts.append(f"{Color.text('gray')}]{Color.endCode}")
+            output_parts.append(f"{Color.text('gray')}]{Color.end_code}")
 
         level_str = (
             f"{bg_color}"
             f"{Color.style('bold')}"
-            f" {level:<{self.maxLevelWidth}} "
-            f"{Color.endCode}"
+            f" {level:<{self.max_level_width}} "
+            f"{Color.end_code}"
         )
 
         output_parts.append(level_str)
-        output_parts.append(f"{text_color}{message}{Color.endCode}")
+        output_parts.append(f"{text_color}{message}{Color.end_code}")
 
         print(" ".join(output_parts))
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
         """Write log entry to SQL database."""
-        self._handle_file_rotation(self.logSQL, self.maxSqlSize)
+        self._handle_file_rotation(self.log_sql, self.max_sql_size)
 
         try:
-            with sqlite3.connect(self.logSQL) as conn:
+            with sqlite3.connect(self.log_sql) as conn:
                 conn.execute(
-                    f"INSERT INTO {self.sqlTable} VALUES (?, ?, ?, ?, ?, ?)",
+                    f"INSERT INTO {self.sql_table} VALUES (?, ?, ?, ?, ?, ?)",
                     (
                         log_data["level"],
                         log_data["message"],
@@ -549,11 +556,11 @@ class Tamga:
         if not self._check_file_size(filepath, max_size_mb):
             return
 
-        if filepath == self.logFile and self._log_file_handle:
+        if filepath == self.log_file and self._log_file_handle:
             self._log_file_handle.close()
             self._log_file_handle = None
 
-        if self.enableBackup:
+        if self.enable_backup:
             self._create_backup(filepath)
 
         try:
@@ -562,13 +569,13 @@ class Tamga:
                     json.dump([], f)
             elif filepath.endswith(".db"):
                 with sqlite3.connect(filepath) as conn:
-                    conn.execute(f"DELETE FROM {self.sqlTable}")
+                    conn.execute(f"DELETE FROM {self.sql_table}")
             else:
                 open(filepath, "w", encoding="utf-8").close()
 
-            if filepath == self.logFile:
+            if filepath == self.log_file:
                 self._log_file_handle = open(
-                    self.logFile, "a", encoding="utf-8", buffering=8192
+                    self.log_file, "a", encoding="utf-8", buffering=8192
                 )
         except Exception as e:
             self._log_internal(f"Failed to rotate file: {e}", "ERROR", "red")
@@ -633,19 +640,19 @@ class Tamga:
                 for service in services:
                     temp_apprise.add(service)
 
-                final_title = title or self.notifyTitle.format(
+                final_title = title or self.notify_title.format(
                     appname="Tamga",
                     level="NOTIFY",
-                    date=currentDate(),
-                    time=currentTime(),
+                    date=current_date(),
+                    time=current_time(),
                 )
 
                 temp_apprise.notify(
-                    body=message, title=final_title, body_format=self.notifyFormat
+                    body=message, title=final_title, body_format=self.notify_format
                 )
             except Exception as e:
                 self._log_internal(f"Custom notification failed: {e}", "ERROR", "red")
-        elif self.notifyServices:
+        elif self.notify_services:
             self._send_notification_async(message, "NOTIFY", title)
 
     def metric(self, message: str) -> None:

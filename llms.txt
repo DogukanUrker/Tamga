@@ -50,13 +50,13 @@ logger.critical("Database connection lost")
 ```python
 logger = Tamga(
     # Console output
-    isColored=True,        # Enable colored output (default: True)
-    logToConsole=True,     # Enable console logging (default: True)
+    is_colored=True,        # Enable colored output (default: True)
+    log_to_console=True,     # Enable console logging (default: True)
 
     # Timestamp components
-    showDay=True,          # Show date (default: True)
-    showTime=True,         # Show time (default: True)
-    showTimezone=False,    # Show timezone (default: False)
+    show_day=True,          # Show date (default: True)
+    show_time=True,         # Show time (default: True)
+    show_timezone=False,    # Show timezone (default: False)
 )
 ```
 
@@ -65,18 +65,18 @@ logger = Tamga(
 ```python
 logger = Tamga(
     # File outputs
-    logToFile=False,       # Enable file logging (default: False)
-    logFile="tamga.log",   # Log file path (default: "tamga.log")
+    log_to_file=False,       # Enable file logging (default: False)
+    log_file="tamga.log",   # Log file path (default: "tamga.log")
 
-    logToJSON=False,       # Enable JSON logging (default: False)
-    logJSON="tamga.json",  # JSON file path (default: "tamga.json")
+    log_to_json=False,       # Enable JSON logging (default: False)
+    log_json="tamga.json",  # JSON file path (default: "tamga.json")
 
-    logToSQL=False,        # Enable SQLite logging (default: False)
-    logSQL="tamga.db",     # SQLite file path (default: "tamga.db")
-    sqlTable="logs",       # Table name (default: "logs")
+    log_to_sql=False,        # Enable SQLite logging (default: False)
+    log_sql="tamga.db",     # SQLite file path (default: "tamga.db")
+    sql_table="logs",       # Table name (default: "logs")
 
     # External services
-    logToMongo=False,      # Enable MongoDB (default: False)
+    log_to_mongo=False,      # Enable MongoDB (default: False)
 )
 ```
 
@@ -85,13 +85,13 @@ logger = Tamga(
 ```python
 logger = Tamga(
     # Buffer configuration
-    bufferSize=50,         # Logs to buffer before writing (default: 50)
+    buffer_size=50,         # Logs to buffer before writing (default: 50)
 
     # File rotation (in MB)
-    maxLogSize=10,         # Max log file size (default: 10)
-    maxJsonSize=10,        # Max JSON file size (default: 10)
-    maxSqlSize=50,         # Max SQLite size (default: 50)
-    enableBackup=True,     # Create backups on rotation (default: True)
+    max_log_size=10,         # Max log file size (default: 10)
+    max_json_size=10,        # Max JSON file size (default: 10)
+    max_sql_size=50,         # Max SQLite size (default: 50)
+    enable_backup=True,     # Create backups on rotation (default: True)
 )
 ```
 
@@ -99,10 +99,10 @@ logger = Tamga(
 
 ```python
 logger = Tamga(
-    logToMongo=True,
-    mongoURI="mongodb+srv://user:pass@cluster.mongodb.net",
-    mongoDatabaseName="tamga",      # Default: "tamga"
-    mongoCollectionName="logs",     # Default: "logs"
+    log_to_mongo=True,
+    mongo_uri="mongodb+srv://user:pass@cluster.mongodb.net",
+    mongo_database_name="tamga",      # Default: "tamga"
+    mongo_collection_name="logs",     # Default: "logs"
 )
 ```
 
@@ -111,7 +111,7 @@ logger = Tamga(
 ```python
 logger = Tamga(
     # Apprise notification services (supports 80+ services)
-    notifyServices=[
+    notify_services=[
         # Discord
         "discord://webhook_id/webhook_token",
 
@@ -134,13 +134,13 @@ logger = Tamga(
     ],
 
     # Which log levels trigger notifications
-    notifyLevels=["NOTIFY"],  # Default: ["NOTIFY"]
+    notify_levels=["NOTIFY"],  # Default: ["NOTIFY"]
 
     # Notification title template
-    notifyTitle="{appname}: {level} - {date}",  # Default template
+    notify_title="{appname}: {level} - {date}",  # Default template
 
     # Format: "text", "markdown", or "html"
-    notifyFormat="text",  # Default: "text"
+    notify_format="text",  # Default: "text"
 )
 ```
 
@@ -164,8 +164,8 @@ logger.trace("Detailed trace info")         # Gray
 **Note on `notify()`**: This method sends notifications through configured Apprise services. You can also configure other levels to trigger notifications:
 ```python
 logger = Tamga(
-    notifyServices=["discord://webhook_id/webhook_token"],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],  # These levels send notifications
+    notify_services=["discord://webhook_id/webhook_token"],
+    notify_levels=["CRITICAL", "ERROR", "NOTIFY"],  # These levels send notifications
 )
 
 # These trigger notifications:
@@ -174,7 +174,7 @@ logger.error("Payment failed")
 logger.notify("New customer signed up!")
 
 # This doesn't trigger notification:
-logger.warning("High memory usage")  # WARNING not in notifyLevels
+logger.warning("High memory usage")  # WARNING not in notify_levels
 ```
 
 ### Custom Logging
@@ -259,24 +259,24 @@ import os
 
 logger = Tamga(
     # File logging with rotation
-    logToFile=True,
-    logFile="logs/app.log",
-    maxLogSize=50,
-    enableBackup=True,
+    log_to_file=True,
+    log_file="logs/app.log",
+    max_log_size=50,
+    enable_backup=True,
 
     # JSON for log aggregation
-    logToJSON=True,
+    log_to_json=True,
 
     # Performance optimization
-    logToConsole=False,
-    bufferSize=200,
+    log_to_console=False,
+    buffer_size=200,
 
     # Centralized logging
-    logToMongo=True,
-    mongoURI=os.getenv("MONGO_URI"),
+    log_to_mongo=True,
+    mongo_uri=os.getenv("MONGO_URI"),
 
     # Multi-service notifications for critical events
-    notifyServices=[
+    notify_services=[
         # Discord webhook for dev team
         os.getenv("DISCORD_WEBHOOK", "discord://webhook_id/webhook_token"),
         # Slack for ops team
@@ -286,9 +286,9 @@ logger = Tamga(
         # SMS for critical issues
         os.getenv("TWILIO_SMS", "twilio://SID:Token@+1234567890/+0987654321"),
     ] if os.getenv("NOTIFICATIONS_ENABLED") else [],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
-    notifyTitle="🚨 {appname} Alert: {level}",
-    notifyFormat="markdown",
+    notify_levels=["CRITICAL", "ERROR", "NOTIFY"],
+    notify_title="🚨 {appname} Alert: {level}",
+    notify_format="markdown",
 )
 ```
 
@@ -296,9 +296,9 @@ logger = Tamga(
 
 ```python
 logger = Tamga(
-    logToFile=True,
-    logToConsole=False,    # Disable console for speed
-    bufferSize=1000,       # Large buffer
+    log_to_file=True,
+    log_to_console=False,    # Disable console for speed
+    buffer_size=1000,       # Large buffer
 )
 
 # Process large dataset
@@ -315,17 +315,17 @@ for i, record in enumerate(large_dataset):
 ```python
 logger = Tamga(
     # Maximum visibility
-    isColored=True,
-    showDay=True,
-    showTime=True,
-    showTimezone=True,
+    is_colored=True,
+    show_day=True,
+    show_time=True,
+    show_timezone=True,
 
     # Immediate feedback
-    bufferSize=1,
+    buffer_size=1,
 
     # Local file for debugging
-    logToFile=True,
-    logFile="debug.log",
+    log_to_file=True,
+    log_file="debug.log",
 )
 ```
 
@@ -371,12 +371,12 @@ service_name = os.getenv("SERVICE_NAME", "unknown")
 
 logger = Tamga(
     # Service-specific collection
-    logToMongo=True,
-    mongoCollectionName=service_name,
+    log_to_mongo=True,
+    mongo_collection_name=service_name,
 
     # Include service context
-    logToFile=True,
-    logFile=f"logs/{service_name}.log",
+    log_to_file=True,
+    log_file=f"logs/{service_name}.log",
 )
 
 # Add service context to all logs
@@ -392,10 +392,10 @@ def log_with_context(message, level="info"):
 
 ### Buffer Size Recommendations
 
-- **Real-time monitoring**: `bufferSize=1` (immediate writes)
-- **Web applications**: `bufferSize=50` (default, balanced)
-- **Background jobs**: `bufferSize=200-500` (efficient batching)
-- **Data processing**: `bufferSize=1000+` (maximum performance)
+- **Real-time monitoring**: `buffer_size=1` (immediate writes)
+- **Web applications**: `buffer_size=50` (default, balanced)
+- **Background jobs**: `buffer_size=200-500` (efficient batching)
+- **Data processing**: `buffer_size=1000+` (maximum performance)
 
 ### Performance Tips
 
@@ -414,9 +414,9 @@ def log_with_context(message, level="info"):
 
 ## File Rotation
 
-When a file reaches `maxLogSize`:
+When a file reaches `max_log_size`:
 
-1. If `enableBackup=True`, creates timestamped backup:
+1. If `enable_backup=True`, creates timestamped backup:
    - `tamga.log` → `tamga.log.20250628_143022.bak`
 
 2. Clears the original file:
@@ -432,9 +432,9 @@ Configure which levels trigger notifications:
 
 ```python
 logger = Tamga(
-    notifyServices=["discord://webhook_id/webhook_token"],
-    notifyLevels=["CRITICAL", "ERROR", "NOTIFY"],
-    notifyFormat="markdown",  # or "html", "text"
+    notify_services=["discord://webhook_id/webhook_token"],
+    notify_levels=["CRITICAL", "ERROR", "NOTIFY"],
+    notify_format="markdown",  # or "html", "text"
 )
 
 # These trigger notifications:
@@ -443,7 +443,7 @@ logger.error("Payment failed")
 logger.notify("New premium subscription!")
 
 # This doesn't trigger notification:
-logger.warning("High memory usage")  # WARNING not in notifyLevels
+logger.warning("High memory usage")  # WARNING not in notify_levels
 ```
 
 ## Available Colors
@@ -464,7 +464,7 @@ Tamga is thread-safe with locked buffer operations:
 ```python
 import threading
 
-logger = Tamga(logToFile=True)
+logger = Tamga(log_to_file=True)
 
 def worker(worker_id):
     for i in range(100):
@@ -504,32 +504,32 @@ import os
 # Production-ready configuration
 logger = Tamga(
     # Console only in development
-    logToConsole=os.getenv("ENV") != "production",
+    log_to_console=os.getenv("ENV") != "production",
 
     # Always log to file
-    logToFile=True,
-    logFile="logs/app.log",
-    maxLogSize=50,
+    log_to_file=True,
+    log_file="logs/app.log",
+    max_log_size=50,
 
     # JSON for log aggregation
-    logToJSON=True,
+    log_to_json=True,
 
     # Performance settings
-    bufferSize=100 if os.getenv("ENV") == "production" else 10,
+    buffer_size=100 if os.getenv("ENV") == "production" else 10,
 
     # MongoDB for centralized logging
-    logToMongo=bool(os.getenv("MONGO_URI")),
-    mongoURI=os.getenv("MONGO_URI"),
+    log_to_mongo=bool(os.getenv("MONGO_URI")),
+    mongo_uri=os.getenv("MONGO_URI"),
 
     # Multi-service notifications
-    notifyServices=[
+    notify_services=[
         os.getenv("DISCORD_WEBHOOK"),
         os.getenv("SLACK_WEBHOOK"),
         f"mailto://{os.getenv('SMTP_USER')}:{os.getenv('SMTP_PASS')}@smtp.gmail.com:587/?to=alerts@company.com",
     ] if os.getenv("NOTIFICATIONS_ENABLED") else [],
-    notifyLevels=["CRITICAL", "NOTIFY"],
-    notifyTitle="{appname} Alert: {level}",
-    notifyFormat="markdown",
+    notify_levels=["CRITICAL", "NOTIFY"],
+    notify_title="{appname} Alert: {level}",
+    notify_format="markdown",
 )
 
 # Application usage

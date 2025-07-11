@@ -8,27 +8,27 @@ from tamga import Tamga
 # Advanced logger setup for production-like environments
 logger = Tamga(
     # File logging with rotation and backup
-    logToFile=True,
-    logFile="logs/app.log",
-    maxLogSize=50,  # 50 MB max file size
-    enableBackup=True,  # Enable backup on rotation
+    log_to_file=True,
+    log_file="logs/app.log",
+    max_log_size=50,  # 50 MB max file size
+    enable_backup=True,  # Enable backup on rotation
     # JSON logging for log aggregation
-    logToJSON=True,
-    logJSON="logs/app.json",
-    maxJsonSize=50,
+    log_to_json=True,
+    log_json="logs/app.json",
+    max_json_size=50,
     # SQLite logging for analytics
-    logToSQL=True,
-    logSQL="logs/app.db",
-    sqlTable="logs",
-    maxSqlSize=100,
+    log_to_sql=True,
+    log_sql="logs/app.db",
+    sql_table="logs",
+    max_sql_size=100,
     # Performance
-    bufferSize=200,  # Large buffer for high throughput
-    logToConsole=False,  # Disable console for speed
+    buffer_size=200,  # Large buffer for high throughput
+    log_to_console=False,  # Disable console for speed
     # MongoDB for centralized logging
-    logToMongo=bool(os.getenv("MONGO_URI")),
-    mongoURI=os.getenv("MONGO_URI", ""),
+    log_to_mongo=bool(os.getenv("MONGO_URI")),
+    mongo_uri=os.getenv("MONGO_URI", ""),
     # Multi-service notifications for critical events
-    notifyServices=[
+    notify_services=[
         # Discord webhook for dev team
         os.getenv("DISCORD_WEBHOOK", "discord://webhook_id/webhook_token"),
         # Slack for ops team
@@ -40,9 +40,9 @@ logger = Tamga(
     ]
     if os.getenv("NOTIFICATIONS_ENABLED")
     else [],
-    notifyLevels=["CRITICAL", "ERROR"],
-    notifyTitle="🚨 {appname} Alert: {level}",
-    notifyFormat="markdown",  # text, html, markdown
+    notify_levels=["CRITICAL", "ERROR"],
+    notify_title="🚨 {appname} Alert: {level}",
+    notify_format="markdown",  # text, html, markdown
 )
 
 # Example log events
