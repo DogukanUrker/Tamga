@@ -165,7 +165,7 @@ logger.flush()
 ```
 
 ### File Rotation
-When log files reach `max_log_size_mb`, Tamga automatically:
+When log files reach `max_file_size_mb`, Tamga automatically:
 - Creates timestamped backups (if enabled)
 - Clears the original file
 - Continues logging seamlessly

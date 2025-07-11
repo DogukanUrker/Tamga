@@ -44,7 +44,7 @@ class Tamga:
         "notify_levels",
         "notify_title",
         "notify_format",
-        "max_log_size_mb",
+        "max_file_size_mb",
         "max_json_size_mb",
         "max_sql_size_mb",
         "enable_backup",
@@ -83,7 +83,7 @@ class Tamga:
         notify_levels: list = [],
         notify_title: str = "{appname}: {level} - {date}",
         notify_format: str = "text",
-        max_log_size_mb: int = 10,
+        max_file_size_mb: int = 10,
         max_json_size_mb: int = 10,
         max_sql_size_mb: int = 50,
         enable_backup: bool = True,
@@ -113,7 +113,7 @@ class Tamga:
             notify_levels: List of log levels to send notifications for (default: includes NOTIFY)
             notify_title: Template for notification titles (default: "{appname}: {level} - {date}")
             notify_format: Notification format type - text/markdown/html (default: "text")
-            max_log_size_mb: Maximum size in MB for log file (default: 10)
+            max_file_size_mb: Maximum size in MB for log file (default: 10)
             max_json_size_mb: Maximum size in MB for JSON file (default: 10)
             max_sql_size_mb: Maximum size in MB for SQL file (default: 50)
             enable_backup: Enable backup when max size is reached (default: True)
@@ -139,7 +139,7 @@ class Tamga:
         self.notify_title = notify_title
         self.notify_format = notify_format
         self.notify_levels = list(set(notify_levels + ["NOTIFY"]))
-        self.max_log_size_mb = max_log_size_mb
+        self.max_file_size_mb = max_file_size_mb
         self.max_json_size_mb = max_json_size_mb
         self.max_sql_size_mb = max_sql_size_mb
         self.enable_backup = enable_backup
@@ -360,7 +360,7 @@ class Tamga:
         if not self._file_buffer:
             return
 
-        self._handle_file_rotation(self.file_path, self.max_log_size_mb)
+        self._handle_file_rotation(self.file_path, self.max_file_size_mb)
 
         try:
             if self._file_path_handle and not self._file_path_handle.closed:

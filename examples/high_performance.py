@@ -13,7 +13,7 @@ NUM_LOGS = 1_000_000  # One million log entries
 logger = Tamga(
     file_output=True,
     file_path="biglog.log",
-    max_log_size_mb=100,  # 100 MB max file size
+    max_file_size_mb=100,  # 100 MB max file size
     console_output=False,  # Disable console for max speed
     buffer_size=10_000,  # Large buffer for throughput
 )
