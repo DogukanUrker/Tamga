@@ -67,6 +67,7 @@ class Tamga:
         "_color_cache",
         "_json_file_handle",
         "_file_path_handle",
+        "_json_separators",
     ]
 
     def __init__(
@@ -183,6 +184,7 @@ class Tamga:
         self._color_cache = {}
         self._json_file_handle = None
         self._file_path_handle = None
+        self._json_separators = (",", ":")
 
         self._init_services()
 
@@ -254,7 +256,7 @@ class Tamga:
                     f"Failed to initialize notifications: {e}", "ERROR", "red"
                 )
 
-    def _send_notification_async(self, message: str, level: str, title: str = None):
+    def _send_notification_async(self, message: str, level: str, title: str = None, data: dict = None):
         """Send notification asynchronously without blocking."""
         if not self.notify_services or not self._apprise:
             return
@@ -267,7 +269,7 @@ class Tamga:
                     date=current_date(),
                     time=current_time(),
                 )
-                formatted_message = self._apply_default_template(message, level)
+                formatted_message = self._apply_default_template(message, level, data)
 
                 self._apprise.notify(
                     body=formatted_message,
@@ -282,13 +284,13 @@ class Tamga:
         else:
             threading.Thread(target=send, daemon=True).start()
 
-    def _apply_default_template(self, message: str, level: str) -> str:
+    def _apply_default_template(self, message: str, level: str, data: dict = None) -> str:
         """Apply notification templates using the unified apprise module."""
         try:
             from .utils.apprise import format_notification
 
             return format_notification(
-                message, level, current_date(), current_time(), self.notify_format
+                message, level, current_date(), current_time(), self.notify_format, data
             )
         except Exception as e:
             self._log_internal(
@@ -309,7 +311,7 @@ class Tamga:
             conn.execute(
                 f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
                 (level TEXT, message TEXT, date TEXT, time TEXT,
-                timezone TEXT, timestamp REAL)"""
+                timezone TEXT, timestamp REAL, data TEXT)"""
             )
 
     def _ensure_file_exists(self, filepath: str):
@@ -332,15 +334,23 @@ class Tamga:
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
         if self.console_output:
-            self._write_to_console(message, level, color)
+            self._write_to_console(message, level, color, {})
 
-    def log(self, message: str, level: str, color: str) -> None:
+    def log(self, message: str, level: str, color: str, **kwargs) -> None:
         """
         Main logging method that handles all types of logs.
         """
+        if kwargs:
+            data_str = json.dumps(
+                kwargs, ensure_ascii=False, separators=self._json_separators
+            ).replace('"', "'")
+            full_message = f"{message} | {data_str}"
+        else:
+            full_message = message
 
         log_data = {
             "message": message,
+            "full_message": full_message,
             "level": level,
             "color": color,
             "timestamp": self._format_timestamp(),
@@ -348,10 +358,11 @@ class Tamga:
             "time": current_time(),
             "timezone": current_timezone(),
             "unix_timestamp": current_timestamp(),
+            "data": kwargs if kwargs else None,
         }
 
         if self.console_output:
-            self._write_to_console(message, level, color)
+            self._write_to_console(full_message, level, color, kwargs)
 
         if self.file_output:
             self._buffer_file_write(log_data)
@@ -366,7 +377,7 @@ class Tamga:
             if self._apprise is None:
                 self._init_apprise()
 
-            self._send_notification_async(message, level)
+            self._send_notification_async(message, level, title=None, data=kwargs)
 
         if self.mongo_output:
             self._write_to_mongo_async(log_data)
@@ -397,7 +408,7 @@ class Tamga:
                 for log_data in self._file_buffer:
                     file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                     self._file_path_handle.write(
-                        f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
+                        f"[{file_timestamp}] {log_data['level']}: {log_data['full_message']}\n"
                     )
                 self._file_path_handle.flush()
             else:
@@ -405,7 +416,7 @@ class Tamga:
                     for log_data in self._file_buffer:
                         file_timestamp = f"{log_data['date']} | {log_data['time']} | {log_data['timezone']}"
                         f.write(
-                            f"[{file_timestamp}] {log_data['level']}: {log_data['message']}\n"
+                            f"[{file_timestamp}] {log_data['level']}: {log_data['full_message']}\n"
                         )
             self._file_buffer.clear()
         except Exception as e:
@@ -439,9 +450,10 @@ class Tamga:
                             "time": log["time"],
                             "timezone": log["timezone"],
                             "timestamp": log["unix_timestamp"],
+                            "data": log["data"],
                         },
                         ensure_ascii=False,
-                        separators=(",", ":"),
+                        separators=self._json_separators,
                     )
                     for log in self._json_buffer
                 ]
@@ -459,7 +471,7 @@ class Tamga:
             self._color_cache[color] = (Color.text(color), Color.background(color))
         return self._color_cache[color]
 
-    def _write_to_console(self, message: str, level: str, color: str):
+    def _write_to_console(self, message: str, level: str, color: str, kwargs: dict):
         """Write formatted log entry to console."""
         if not self.colored_output:
             timestamp = self._format_timestamp()
@@ -517,8 +529,9 @@ class Tamga:
 
         try:
             with sqlite3.connect(self.sql_path) as conn:
+                data_json = json.dumps(log_data["data"]) if log_data["data"] else None
                 conn.execute(
-                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?)",
+                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (
                         log_data["level"],
                         log_data["message"],
@@ -526,6 +539,7 @@ class Tamga:
                         log_data["time"],
                         log_data["timezone"] or "",
                         log_data["unix_timestamp"],
+                        data_json,
                     ),
                 )
         except Exception as e:
@@ -538,16 +552,18 @@ class Tamga:
 
         async def write():
             try:
-                await self._mongo_client.insert_one(
-                    {
-                        "level": log_data["level"],
-                        "message": log_data["message"],
-                        "date": log_data["date"],
-                        "time": log_data["time"],
-                        "timezone": log_data["timezone"],
-                        "timestamp": log_data["unix_timestamp"],
-                    }
-                )
+                mongo_doc = {
+                    "level": log_data["level"],
+                    "message": log_data["message"],
+                    "date": log_data["date"],
+                    "time": log_data["time"],
+                    "timezone": log_data["timezone"],
+                    "timestamp": log_data["unix_timestamp"],
+                }
+                if log_data["data"]:
+                    mongo_doc["data"] = log_data["data"]
+
+                await self._mongo_client.insert_one(mongo_doc)
             except Exception as e:
                 self._log_internal(f"Failed to write to MongoDB: {e}", "ERROR", "red")
 
@@ -631,28 +647,30 @@ class Tamga:
         except Exception:
             pass
 
-    def info(self, message: str) -> None:
-        self.log(message, "INFO", "sky")
+    def info(self, message: str, **kwargs) -> None:
+        self.log(message, "INFO", "sky", **kwargs)
 
-    def warning(self, message: str) -> None:
-        self.log(message, "WARNING", "amber")
+    def warning(self, message: str, **kwargs) -> None:
+        self.log(message, "WARNING", "amber", **kwargs)
 
-    def error(self, message: str) -> None:
-        self.log(message, "ERROR", "rose")
+    def error(self, message: str, **kwargs) -> None:
+        self.log(message, "ERROR", "rose", **kwargs)
 
-    def success(self, message: str) -> None:
-        self.log(message, "SUCCESS", "emerald")
+    def success(self, message: str, **kwargs) -> None:
+        self.log(message, "SUCCESS", "emerald", **kwargs)
 
-    def debug(self, message: str) -> None:
-        self.log(message, "DEBUG", "indigo")
+    def debug(self, message: str, **kwargs) -> None:
+        self.log(message, "DEBUG", "indigo", **kwargs)
 
-    def critical(self, message: str) -> None:
-        self.log(message, "CRITICAL", "red")
+    def critical(self, message: str, **kwargs) -> None:
+        self.log(message, "CRITICAL", "red", **kwargs)
 
-    def database(self, message: str) -> None:
-        self.log(message, "DATABASE", "green")
+    def database(self, message: str, **kwargs) -> None:
+        self.log(message, "DATABASE", "green", **kwargs)
 
-    def notify(self, message: str, title: str = None, services: list = None) -> None:
+    def notify(
+        self, message: str, title: str = None, services: list = None, **kwargs
+    ) -> None:
         """
         Send a notification through configured services.
 
@@ -660,8 +678,9 @@ class Tamga:
             message: Notification message
             title: Optional custom title (overrides template)
             services: Optional list of services (overrides defaults)
+            **kwargs: Additional key-value data to log
         """
-        self.log(message, "NOTIFY", "purple")
+        self.log(message, "NOTIFY", "purple", **kwargs)
 
         if services:
             try:
@@ -678,31 +697,73 @@ class Tamga:
                     time=current_time(),
                 )
 
+                if kwargs:
+                    data_str = json.dumps(
+                        kwargs, ensure_ascii=False, separators=self._json_separators
+                    ).replace('"', "'")
+                    full_message = f"{message} | {data_str}"
+                else:
+                    full_message = message
+
                 temp_apprise.notify(
-                    body=message, title=final_title, body_format=self.notify_format
+                    body=full_message, title=final_title, body_format=self.notify_format
                 )
             except Exception as e:
                 self._log_internal(f"Custom notification failed: {e}", "ERROR", "red")
         elif self.notify_services:
-            self._send_notification_async(message, "NOTIFY", title)
+            self._send_notification_async(message, "NOTIFY", title, data=kwargs)
 
-    def metric(self, message: str) -> None:
-        self.log(message, "METRIC", "cyan")
+    def metric(self, message: str, **kwargs) -> None:
+        self.log(message, "METRIC", "cyan", **kwargs)
 
-    def trace(self, message: str) -> None:
-        self.log(message, "TRACE", "gray")
+    def trace(self, message: str, **kwargs) -> None:
+        self.log(message, "TRACE", "gray", **kwargs)
 
-    def custom(self, message: str, level: str, color: str) -> None:
-        self.log(message, level, color)
+    def custom(self, message: str, level: str, color: str, **kwargs) -> None:
+        self.log(message, level, color, **kwargs)
 
-    def dir(self, message: str, **kwargs) -> None:
-        """Log message with additional key-value data."""
-        if kwargs:
-            data_str = json.dumps(
-                kwargs, ensure_ascii=False, separators=(",", ":")
-            ).replace('"', "'")
-            log_message = f"{message} | {data_str}"
-        else:
-            log_message = message
+    def dir(self, obj: Any, message: str = "Object dump") -> None:
+        """
+        Pretty print any object in a formatted way.
 
-        self.log(log_message, "DIR", "yellow")
+        Args:
+            obj: Any Python object to pretty print
+            message: Optional message to display before the object
+        """
+        try:
+            if isinstance(obj, (dict, list, tuple, str, int, float, bool, type(None))):
+                formatted = json.dumps(
+                    obj,
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                    default=str,
+                )
+            else:
+                if hasattr(obj, "__dict__"):
+                    formatted = json.dumps(
+                        obj.__dict__,
+                        ensure_ascii=False,
+                        indent=2,
+                        sort_keys=True,
+                        default=str,
+                    )
+                elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes)):
+                    formatted = json.dumps(
+                        list(obj), ensure_ascii=False, indent=2, default=str
+                    )
+                else:
+                    formatted = repr(obj)
+
+            lines = formatted.split("\n")
+
+            if len(lines) == 1:
+                self.log(f"{message}: {lines[0]}", "DIR", "yellow")
+            else:
+                self.log(f"{message}:", "DIR", "yellow")
+                for line in lines:
+                    if line.strip():
+                        self.log(f"  {line}", "DIR", "yellow")
+        except Exception as e:
+            self.log(f"{message}: {repr(obj)}", "DIR", "yellow")
+            self.debug(f"Failed to pretty print object: {e}")

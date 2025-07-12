@@ -89,6 +89,7 @@ class TestTamgaCore(unittest.TestCase):
             self.assertEqual(data[0]["level"], "ERROR")
             self.assertEqual(data[0]["message"], "JSON error message")
             self.assertIn("timestamp", data[0])
+            self.assertIsNone(data[0]["data"])  # No kwargs provided
 
     def test_sql_logging(self):
         """Test SQLite logging functionality."""
@@ -143,8 +144,8 @@ class TestTamgaCore(unittest.TestCase):
         logger.custom("Custom message", "CUSTOM", "purple")
         # Just ensure no exception is raised
 
-    def test_dir_method(self):
-        """Test structured logging with dir method."""
+    def test_key_value_logging_all_levels(self):
+        """Test key-value logging with all log levels."""
         logger = Tamga(
             console_output=False,
             file_output=True,
@@ -152,14 +153,91 @@ class TestTamgaCore(unittest.TestCase):
             buffer_size=1,
         )
 
-        logger.dir("User action", user_id=123, action="login", success=True)
+        # Test all levels with kwargs
+        logger.info("User login", user_id=123, ip="192.168.1.1")
+        logger.warning("High memory", usage_percent=85, threshold=80)
+        logger.error("API failed", endpoint="/api/users", status_code=500)
+        logger.success("Payment processed", amount=99.99, currency="USD")
+        logger.debug("Cache hit", key="user_123", ttl=3600)
+        logger.critical("Database down", host="db.example.com", port=5432)
+        logger.database("Query executed", table="users", rows_affected=5)
+        logger.metric("Response time", endpoint="/api", duration_ms=125)
+        logger.trace("Function called", function="process_data", args_count=3)
+        logger.custom("Deploy", "DEPLOY", "purple", version="2.0.1", environment="prod")
         logger.flush()
 
         with open(self.file_path, "r") as f:
             content = f.read()
-            self.assertIn("User action", content)
+            # Check that kwargs are present in the log
             self.assertIn("user_id", content)
             self.assertIn("123", content)
+            self.assertIn("usage_percent", content)
+            self.assertIn("85", content)
+            self.assertIn("status_code", content)
+            self.assertIn("500", content)
+            self.assertIn("amount", content)
+            self.assertIn("99.99", content)
+            self.assertIn("version", content)
+            self.assertIn("2.0.1", content)
+
+    def test_json_logging_with_kwargs(self):
+        """Test JSON logging with key-value data."""
+        logger = Tamga(
+            console_output=False,
+            json_output=True,
+            json_path=self.json_file,
+            buffer_size=1,
+        )
+
+        logger.info("Test message", user_id=456, action="logout")
+        logger.flush()
+
+        with open(self.json_file, "r") as f:
+            data = json.load(f)
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0]["message"], "Test message")
+            self.assertIsNotNone(data[0]["data"])
+            self.assertEqual(data[0]["data"]["user_id"], 456)
+            self.assertEqual(data[0]["data"]["action"], "logout")
+
+    def test_dir_method_pretty_print(self):
+        """Test dir method for pretty printing objects."""
+        logger = Tamga(
+            console_output=False,
+            file_output=True,
+            file_path=self.file_path,
+            buffer_size=10,
+        )
+
+        # Test with dictionary
+        test_dict = {
+            "name": "John Doe",
+            "age": 30,
+            "address": {"street": "123 Main St", "city": "New York"},
+        }
+        logger.dir(test_dict, "User data")
+
+        # Test with list
+        test_list = [1, 2, {"key": "value"}, ["nested", "list"]]
+        logger.dir(test_list, "Array data")
+
+        # Test with custom object
+        class TestObj:
+            def __init__(self):
+                self.prop1 = "value1"
+                self.prop2 = 42
+
+        obj = TestObj()
+        logger.dir(obj, "Custom object")
+
+        logger.flush()
+
+        with open(self.file_path, "r") as f:
+            content = f.read()
+            self.assertIn("User data", content)
+            self.assertIn("Array data", content)
+            self.assertIn("Custom object", content)
+            self.assertIn("DIR", content)
 
     def test_file_rotation(self):
         """Test file rotation when size limit is reached."""
@@ -263,6 +341,35 @@ class TestTamgaCore(unittest.TestCase):
                 "TRACE",
             ]:
                 self.assertIn(level, content)
+
+    def test_sql_with_kwargs(self):
+        """Test SQL logging with key-value data."""
+        logger = Tamga(
+            console_output=False,
+            sql_output=True,
+            sql_path=self.sql_file,
+            sql_table_name="test_logs",
+        )
+
+        logger.info("SQL test", user_id=789, action="create")
+
+        # Verify SQL data
+        conn = sqlite3.connect(self.sql_file)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM test_logs WHERE level='INFO'")
+        rows = cursor.fetchall()
+        conn.close()
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0][0], "INFO")  # level
+        self.assertEqual(rows[0][1], "SQL test")  # message
+
+        # Check data column
+        data_json = rows[0][6]  # data column
+        self.assertIsNotNone(data_json)
+        data = json.loads(data_json)
+        self.assertEqual(data["user_id"], 789)
+        self.assertEqual(data["action"], "create")
 
 
 if __name__ == "__main__":

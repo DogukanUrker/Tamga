@@ -19,12 +19,37 @@ def get_level_emoji(level: str) -> str:
     return LOG_EMOJIS.get(level, "📝")
 
 
-def create_html_template(message: str, level: str, date: str, time: str) -> str:
+def create_html_template(
+    message: str, level: str, date: str, time: str, data: dict = None
+) -> str:
     """Create modern HTML template for notifications."""
     color = get_level_color(level)
     rgb = COLOR_PALETTE.get(LOG_LEVELS.get(level, "purple"), (168, 85, 247))
     light_bg = f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.1)"
     emoji = get_level_emoji(level)
+
+    data_section = ""
+    if data:
+        data_rows = ""
+        for key, value in data.items():
+            data_rows += f"""
+                <tr>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-weight: 600; color: #374151; text-align: left;">{key}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #6b7280; text-align: left;">{value}</td>
+                </tr>
+            """
+
+        data_section = f"""
+            <!-- Structured Data -->
+            <div style="padding: 0 28px 24px 28px;">
+                <h3 style="margin: 0 0 16px 0; color: #374151; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    📊 Data
+                </h3>
+                <table style="width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
+                    {data_rows}
+                </table>
+            </div>
+        """
 
     return f"""
     <!DOCTYPE html>
@@ -66,6 +91,8 @@ def create_html_template(message: str, level: str, date: str, time: str) -> str:
                         </p>
                     </div>
 
+                    {data_section}
+
                     <!-- Footer -->
                     <div style="padding: 20px 28px; border-top: 1px solid #f0f0f0; background: #fafafa;">
                         <p style="margin: 0; text-align: center; color: #737373; font-size: 13px;">
@@ -82,14 +109,22 @@ def create_html_template(message: str, level: str, date: str, time: str) -> str:
     """.strip()
 
 
-def create_markdown_template(message: str, level: str, date: str, time: str) -> str:
+def create_markdown_template(
+    message: str, level: str, date: str, time: str, data: dict = None
+) -> str:
     """Create markdown template for notifications."""
     emoji = get_level_emoji(level)
+
+    data_section = ""
+    if data:
+        data_section = "\n\n**📊 Data:**\n"
+        for key, value in data.items():
+            data_section += f"- **{key}:** `{value}`\n"
 
     return f"""## {emoji} {level} Notification
 
 **Message:** {message}
-
+{data_section}
 ---
 **Date:** {date}
 **Time:** {time}
@@ -97,21 +132,34 @@ def create_markdown_template(message: str, level: str, date: str, time: str) -> 
 *Powered by [Tamga Logger](https://tamga.vercel.app)*"""
 
 
-def create_text_template(message: str, level: str, date: str, time: str) -> str:
+def create_text_template(
+    message: str, level: str, date: str, time: str, data: dict = None
+) -> str:
     """Create plain text template for notifications."""
     emoji = get_level_emoji(level)
+
+    data_section = ""
+    if data:
+        data_section = "\n\n📊 DATA:\n"
+        for key, value in data.items():
+            data_section += f"  {key}: {value}\n"
 
     return f"""
 {emoji} {level} NOTIFICATION
 
 {message}
-
+{data_section}
 {date} • {time}
-"""
+""".strip()
 
 
 def format_notification(
-    message: str, level: str, date: str, time: str, format_type: str = "text"
+    message: str,
+    level: str,
+    date: str,
+    time: str,
+    format_type: str = "text",
+    data: dict = None,
 ) -> str:
     """
     Format notification message based on the specified format type.
@@ -122,6 +170,7 @@ def format_notification(
         date: The date string
         time: The time string
         format_type: The format type ('html', 'markdown', or 'text')
+        data: Optional structured data dictionary
 
     Returns:
         Formatted message string
@@ -129,8 +178,8 @@ def format_notification(
     format_type = format_type.lower()
 
     if format_type == "html":
-        return create_html_template(message, level, date, time)
+        return create_html_template(message, level, date, time, data)
     elif format_type == "markdown":
-        return create_markdown_template(message, level, date, time)
+        return create_markdown_template(message, level, date, time, data)
     else:
-        return create_text_template(message, level, date, time)
+        return create_text_template(message, level, date, time, data)

@@ -19,7 +19,7 @@ A modern, high-performance logging utility for Python with multiple output forma
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
 - 🔔 **Notifications** - Multi-service notifications via [Apprise](https://github.com/caronc/apprise) (Discord, Slack, Email, SMS, and more)
-- 🔍 **Structured Logging** - Key-value data support with `dir()` method
+- 🔍 **Structured Logging** - Key-value data support for all log levels plus pretty printing with `dir()` method
 
 ## 🚀 Quick Start
 
@@ -37,6 +37,10 @@ logger.warning("Memory usage at 85%")
 logger.error("Failed to connect to API")
 logger.success("User registered successfully")
 logger.debug("Cache initialized with 1000 entries")
+
+# Log with key-value data (all levels support this)
+logger.info("User login", user_id=123, ip="192.168.1.1", success=True)
+logger.error("API failed", endpoint="/api/users", status_code=500)
 ```
 
 ## 🧑‍💻 Examples
@@ -75,15 +79,30 @@ logger = Tamga(
 )
 ```
 
-### Structured Logging
+### Key-Value Logging
 ```python
-# Log with key-value data
-logger.dir("User action",
-    user_id="123",
-    action="login",
-    ip_address="192.168.1.1",
-    success=True
-)
+# All log levels now support key-value data
+logger.info("User login", user_id=123, ip="192.168.1.1", success=True)
+logger.warning("High memory usage", current_mb=7680, total_mb=8192, percentage=93.75)
+logger.error("API request failed", endpoint="/api/users", status_code=500, retry_count=3)
+logger.success("Payment processed", transaction_id="TXN-789", amount=99.99, currency="USD")
+logger.debug("Cache statistics", hits=1250, misses=45, hit_rate=0.965)
+```
+
+### Pretty Printing Objects
+```python
+# Use dir() for beautiful formatting of complex objects
+user_profile = {
+    "id": 456,
+    "username": "johndoe",
+    "profile": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "verified": True
+    },
+    "roles": ["user", "premium", "beta_tester"]
+}
+logger.dir(user_profile, "User profile loaded")
 ```
 
 ### Production Setup
@@ -130,6 +149,8 @@ logger = Tamga(
 | DIR | Yellow | `logger.dir()` | Structured key-value data |
 | CUSTOM | Any | `logger.custom()` | Custom levels |
 
+**Note**: All log levels support key-value data through keyword arguments. The `dir()` method is specifically designed for pretty printing complex objects.
+
 ## 🔧 Advanced Features
 
 ### Notifications
@@ -145,11 +166,22 @@ logger = Tamga(
     notify_format="markdown",  # text, markdown, or html
 )
 
-# Send notification
-logger.notify("Payment received from user #123")
+# Send notification with structured data
+logger.notify(
+    "Payment received from user #123",
+    user_id="123",
+    amount=299.99,
+    currency="USD",
+    payment_method="stripe"
+)
 
-# Critical logs also trigger notifications
-logger.critical("Database connection lost")
+# Critical logs also trigger notifications with structured data
+logger.critical(
+    "Database connection lost",
+    host="db.production.internal",
+    port=5432,
+    error="Connection timeout after 30s"
+)
 ```
 
 ### Custom Log Levels

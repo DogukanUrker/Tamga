@@ -45,27 +45,89 @@ logger = Tamga(
     notify_format="markdown",  # text, html, markdown
 )
 
-# Example log events
-logger.info("Advanced logger initialized")
-logger.success("Service started successfully")
-logger.warning("Cache miss rate above threshold")
-logger.error("Failed to process payment")
-logger.critical("Database connection lost")
-logger.notify("New premium subscription purchased!")
-
-# Structured logging for business events
-logger.dir(
-    "User action",
-    user_id="user_456",
-    action="purchase",
-    item="Pro Plan",
-    amount=99.99,
-    currency="USD",
-    success=True,
+# Example log events with structured data
+logger.info(
+    "Advanced logger initialized", config_file="production.yaml", pid=os.getpid()
+)
+logger.success("Service started successfully", port=8080, workers=4, ssl_enabled=True)
+logger.warning(
+    "Cache miss rate above threshold", miss_rate=0.15, threshold=0.10, cache_size_mb=512
+)
+logger.error(
+    "Failed to process payment",
+    error_code="PAYMENT_DECLINED",
+    transaction_id="TXN-12345",
+    amount=199.99,
+    retry_attempt=2,
+)
+logger.critical(
+    "Database connection lost",
+    host="db.production.internal",
+    port=5432,
+    error="Connection timeout after 30s",
+    pool_size=20,
 )
 
-# Custom log level and color
-logger.custom("Deploy completed", "DEPLOY", "purple")
+# Notification with structured data
+logger.notify(
+    "New premium subscription purchased!",
+    customer_id="CUST-789",
+    plan="enterprise",
+    monthly_value=999.99,
+    contract_length_months=12,
+)
+
+# Business metrics logging
+logger.metric(
+    "API performance",
+    endpoint="/api/v2/users",
+    avg_response_ms=45,
+    p95_response_ms=125,
+    requests_per_second=1250,
+)
+
+# Custom log level with business context
+logger.custom(
+    "Deployment completed",
+    "DEPLOY",
+    "purple",
+    version="2.1.0",
+    environment="production",
+    region="us-east-1",
+    deployment_time_seconds=180,
+    rollback_enabled=True,
+)
+
+# Pretty print complex configuration
+app_config = {
+    "database": {
+        "primary": {
+            "host": "db-primary.prod",
+            "port": 5432,
+            "pool": {"min": 10, "max": 50},
+        },
+        "replica": {
+            "host": "db-replica.prod",
+            "port": 5432,
+            "pool": {"min": 5, "max": 25},
+        },
+    },
+    "cache": {
+        "redis": {
+            "nodes": ["redis-1:6379", "redis-2:6379", "redis-3:6379"],
+            "cluster_mode": True,
+            "ttl_seconds": 3600,
+        }
+    },
+    "features": {"new_dashboard": True, "beta_api": False, "experimental_cache": True},
+    "monitoring": {
+        "metrics_enabled": True,
+        "trace_sample_rate": 0.1,
+        "log_level": "INFO",
+    },
+}
+
+logger.dir(app_config, "Application configuration loaded")
 
 # Force flush buffered logs (important before shutdown)
 logger.flush()

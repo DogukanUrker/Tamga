@@ -15,7 +15,8 @@ Key features:
 - Multi-service notifications via Apprise (80+ services)
 - Automatic file rotation with backups
 - Thread-safe with async MongoDB support
-- Structured logging with key-value data
+- Structured logging with key-value data for all log levels
+- Pretty printing for complex objects with dir() method
 
 ## Installation
 
@@ -41,6 +42,17 @@ logger.error("Failed to connect to API")
 logger.success("User registered successfully")
 logger.debug("Cache initialized with 1000 entries")
 logger.critical("Database connection lost")
+
+# Log with key-value data
+logger.info("User login", user_id=123, ip="192.168.1.1", success=True)
+logger.error("API failed", endpoint="/api/users", status_code=500, retry_count=3)
+
+# Pretty print complex objects
+data = {
+    "users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}],
+    "settings": {"theme": "dark", "notifications": True}
+}
+logger.dir(data, "Application configuration")
 ```
 
 ## Configuration Parameters
@@ -189,17 +201,19 @@ logger = Tamga(
 
 ### Standard Levels
 
+All logging methods now support key-value data through keyword arguments:
+
 ```python
-logger.info("Informational message")        # Sky blue
-logger.warning("Warning message")           # Amber
-logger.error("Error occurred")              # Rose
-logger.success("Operation completed")       # Emerald
-logger.debug("Debug information")           # Indigo
-logger.critical("Critical failure")         # Red
-logger.database("Query executed")           # Green
-logger.notify("Important notification")     # Purple - sends notification
-logger.metric("Response time: 125ms")       # Cyan
-logger.trace("Detailed trace info")         # Gray
+logger.info("Informational message", key1="value1", key2=123)        # Sky blue
+logger.warning("Warning message", threshold=80, current=85)          # Amber
+logger.error("Error occurred", error_code="E001", retry_count=3)     # Rose
+logger.success("Operation completed", duration_ms=125)               # Emerald
+logger.debug("Debug information", variable_x=42, state="active")     # Indigo
+logger.critical("Critical failure", component="database")            # Red
+logger.database("Query executed", table="users", rows=100)           # Green
+logger.notify("Important notification", user_count=5)                # Purple - sends notification
+logger.metric("Response time", endpoint="/api", ms=125)              # Cyan
+logger.trace("Detailed trace info", stack_depth=5)                   # Gray
 ```
 
 **Note on `notify()`**: This method sends notifications through configured Apprise services. You can also configure other levels to trigger notifications:
@@ -218,14 +232,55 @@ logger.notify("New customer signed up!")
 logger.warning("High memory usage")  # WARNING not in notify_levels
 ```
 
+### Pretty Printing Objects
+
+The `dir()` method is designed for pretty printing complex objects:
+
+```python
+# Pretty print dictionaries
+user_profile = {
+    "id": 123,
+    "name": "John Doe",
+    "roles": ["admin", "user"],
+    "settings": {
+        "theme": "dark",
+        "notifications": True,
+        "language": "en"
+    }
+}
+logger.dir(user_profile, "User profile")
+
+# Pretty print lists
+data_array = [
+    {"id": 1, "status": "active"},
+    {"id": 2, "status": "pending"},
+    {"id": 3, "status": "inactive"}
+]
+logger.dir(data_array, "Status list")
+
+# Pretty print custom objects
+class ServerStatus:
+    def __init__(self):
+        self.hostname = "server01"
+        self.ip = "192.168.1.100"
+        self.cpu_usage = 45.2
+        self.memory_mb = 8192
+        self.services = ["web", "database", "cache"]
+
+server = ServerStatus()
+logger.dir(server, "Server information")
+
+# Output will be beautifully formatted with proper indentation
+```
+
 ### Custom Logging
 
 ```python
-# Custom level and color
-logger.custom("Deploy completed", "DEPLOY", "purple")
+# Custom level with color and key-value data
+logger.custom("Deploy completed", "DEPLOY", "purple", version="2.0.1", environment="prod")
 
-# Structured logging with key-value data
-logger.dir("User action",
+# Legacy structured logging still works through key-value args
+logger.info("User action",
     user_id="123",
     action="login",
     ip_address="192.168.1.1",
@@ -236,13 +291,14 @@ logger.dir("User action",
 ### Advanced Notification Usage
 
 ```python
-# Send notification with custom title
-logger.notify("Payment processed", title="💰 Payment Alert")
+# Send notification with custom title and data
+logger.notify("Payment processed", title="💰 Payment Alert", amount=99.99, customer_id="C123")
 
 # Send to specific services (overrides default)
 logger.notify(
     "Urgent: Server down",
-    services=["mailto://admin@company.com", "sms://..."]
+    services=["mailto://admin@company.com", "sms://..."],
+    server_id="srv-001"
 )
 ```
 
@@ -257,14 +313,14 @@ logger.flush()
 
 ### Console
 ```
-[28.06.25 | 14:30:45 | UTC]  INFO     Application started
-[28.06.25 | 14:30:46 | UTC]  ERROR    Connection failed
+[28.06.25 | 14:30:45 | UTC]  INFO     Application started | {'version': '1.0.0'}
+[28.06.25 | 14:30:46 | UTC]  ERROR    Connection failed | {'host': 'db.example.com', 'port': 5432}
 ```
 
 ### File (tamga.log)
 ```
-[28.06.25 | 14:30:45 | UTC] INFO: Application started
-[28.06.25 | 14:30:46 | UTC] ERROR: Connection failed
+[28.06.25 | 14:30:45 | UTC] INFO: Application started | {'version': '1.0.0'}
+[28.06.25 | 14:30:46 | UTC] ERROR: Connection failed | {'host': 'db.example.com', 'port': 5432}
 ```
 
 ### JSON
@@ -275,7 +331,10 @@ logger.flush()
     "date": "28.06.25",
     "time": "14:30:45",
     "timezone": "UTC",
-    "timestamp": 1719584445.123456
+    "timestamp": 1719584445.123456,
+    "data": {
+        "version": "1.0.0"
+    }
 }
 ```
 
@@ -287,7 +346,8 @@ CREATE TABLE logs (
     date TEXT,
     time TEXT,
     timezone TEXT,
-    timestamp REAL
+    timestamp REAL,
+    data TEXT  -- JSON string of key-value data
 )
 ```
 
@@ -342,9 +402,13 @@ logger = Tamga(
     buffer_size=1000,       # Large buffer
 )
 
-# Process large dataset
+# Process large dataset with structured data
 for i, record in enumerate(large_dataset):
-    logger.info(f"Processing record {record.id}")
+    logger.info("Processing record",
+        record_id=record.id,
+        index=i,
+        size_bytes=len(record.data)
+    )
 
     # Periodic flush to prevent memory buildup
     if i % 10000 == 0:
@@ -368,6 +432,14 @@ logger = Tamga(
     file_output=True,
     file_path="debug.log",
 )
+
+# Debug with detailed context
+logger.debug("Processing user request",
+    user_id=123,
+    session_id="abc-def-ghi",
+    request_method="POST",
+    endpoint="/api/users/update"
+)
 ```
 
 ### Structured Request Logging
@@ -380,28 +452,35 @@ def log_request(request):
     request_id = str(uuid.uuid4())
     start_time = time.time()
 
-    # Log request details
-    logger.dir("Request started",
+    # Log request details with structured data
+    logger.info("Request started",
         request_id=request_id,
         method=request.method,
         path=request.path,
-        ip=request.remote_addr
+        ip=request.remote_addr,
+        user_agent=request.headers.get('User-Agent')
     )
 
     try:
         response = process(request)
         duration = time.time() - start_time
 
-        logger.dir("Request completed",
+        logger.success("Request completed",
             request_id=request_id,
             status=response.status_code,
-            duration_ms=round(duration * 1000)
+            duration_ms=round(duration * 1000),
+            response_size=len(response.content)
         )
 
         return response
 
     except Exception as e:
-        logger.error(f"Request {request_id} failed: {str(e)}")
+        logger.error(f"Request failed",
+            request_id=request_id,
+            error_type=type(e).__name__,
+            error_message=str(e),
+            traceback=True
+        )
         raise
 ```
 
@@ -421,11 +500,49 @@ logger = Tamga(
 )
 
 # Add service context to all logs
-def log_with_context(message, level="info"):
-    logger.dir(message,
-        service=service_name,
-        version=os.getenv("VERSION"),
-        instance=os.getenv("INSTANCE_ID")
+def log_with_context(level_func, message, **kwargs):
+    # Add default context
+    kwargs.update({
+        "service": service_name,
+        "version": os.getenv("VERSION"),
+        "instance": os.getenv("INSTANCE_ID"),
+        "environment": os.getenv("ENV", "dev")
+    })
+    level_func(message, **kwargs)
+
+# Usage
+log_with_context(logger.info, "Service started", port=8080)
+```
+
+### Complex Object Debugging
+
+```python
+# Debug complex application state
+app_state = {
+    "connections": {
+        "database": {"status": "connected", "pool_size": 10},
+        "redis": {"status": "connected", "memory_mb": 256},
+        "rabbitmq": {"status": "disconnected", "retry_count": 3}
+    },
+    "performance": {
+        "requests_per_second": 1250,
+        "average_response_ms": 45,
+        "error_rate": 0.02
+    },
+    "queues": {
+        "email": {"pending": 145, "processing": 12},
+        "notifications": {"pending": 89, "processing": 5}
+    }
+}
+
+# Pretty print the entire state
+logger.dir(app_state, "Application health check")
+
+# Log specific issues with context
+if app_state["connections"]["rabbitmq"]["status"] == "disconnected":
+    logger.warning("RabbitMQ disconnected",
+        retry_count=app_state["connections"]["rabbitmq"]["retry_count"],
+        action="attempting_reconnect"
     )
 ```
 
@@ -444,6 +561,7 @@ def log_with_context(message, level="info"):
 2. **Use flush() after critical messages** to ensure immediate write
 3. **Increase buffer size** for batch operations
 4. **Use MongoDB logging asynchronously** to avoid blocking
+5. **Leverage key-value logging** for better queryability and analysis
 
 ### Approximate Throughput
 
@@ -478,10 +596,10 @@ logger = Tamga(
     notify_format="markdown",  # or "html", "text"
 )
 
-# These trigger notifications:
-logger.critical("System down")
-logger.error("Payment failed")
-logger.notify("New premium subscription!")
+# These trigger notifications with structured data:
+logger.critical("System down", component="database", error="connection_timeout")
+logger.error("Payment failed", transaction_id="TXN-123", amount=99.99)
+logger.notify("New premium subscription!", plan="pro", user_id=456)
 
 # This doesn't trigger notification:
 logger.warning("High memory usage")  # WARNING not in notify_levels
@@ -494,8 +612,8 @@ Custom logging supports all Tailwind CSS colors:
 - Colors: red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
 
 ```python
-logger.custom("Custom event", "EVENT", "purple")
-logger.custom("Alert", "ALERT", "orange")
+logger.custom("Custom event", "EVENT", "purple", timestamp=time.time())
+logger.custom("Alert", "ALERT", "orange", priority="high", source="monitoring")
 ```
 
 ## Thread Safety
@@ -509,7 +627,11 @@ logger = Tamga(file_output=True)
 
 def worker(worker_id):
     for i in range(100):
-        logger.info(f"Worker {worker_id}: Item {i}")
+        logger.info("Processing item",
+            worker_id=worker_id,
+            item_id=i,
+            thread_name=threading.current_thread().name
+        )
 
 # Safe to use from multiple threads
 threads = [threading.Thread(target=worker, args=(i,)) for i in range(10)]
@@ -529,12 +651,13 @@ Tamga handles failures gracefully without crashing your application:
 ## Best Practices
 
 1. **Use appropriate log levels** - Don't use ERROR for warnings
-2. **Flush critical messages** - Ensure important logs are written
-3. **Configure for your environment** - Different settings for dev/prod
-4. **Use structured logging** - Better for parsing and analysis
-5. **Monitor log file sizes** - Enable rotation to prevent disk issues
-6. **Set up notifications** - Get alerted for critical events
-7. **Optimize buffer size** - Balance performance vs reliability
+2. **Leverage key-value logging** - Better than string formatting for analysis
+3. **Flush critical messages** - Ensure important logs are written
+4. **Configure for your environment** - Different settings for dev/prod
+5. **Use pretty printing for debugging** - `dir()` method for complex objects
+6. **Monitor log file sizes** - Enable rotation to prevent disk issues
+7. **Set up notifications** - Get alerted for critical events
+8. **Optimize buffer size** - Balance performance vs reliability
 
 ## Complete Example
 
@@ -573,26 +696,56 @@ logger = Tamga(
     notify_format="markdown",
 )
 
-# Application usage
-logger.info("Application starting")
-logger.dir("Configuration loaded",
+# Application usage with structured logging
+logger.info("Application starting",
     environment=os.getenv("ENV"),
-    debug_mode=True
+    version=os.getenv("VERSION", "1.0.0"),
+    pid=os.getpid()
 )
 
+# Configuration debugging
+config = {
+    "database": {
+        "host": os.getenv("DB_HOST"),
+        "port": int(os.getenv("DB_PORT", 5432)),
+        "name": os.getenv("DB_NAME")
+    },
+    "cache": {
+        "enabled": True,
+        "ttl": 3600
+    },
+    "features": {
+        "new_ui": True,
+        "beta_features": False
+    }
+}
+logger.dir(config, "Application configuration")
+
 try:
-    # Application logic
-    logger.success("Service initialized")
+    # Application logic with detailed logging
+    logger.success("Service initialized",
+        startup_time_ms=125,
+        modules_loaded=15
+    )
 
     # Important business event - triggers notification
-    logger.notify("New premium subscription: user_123 purchased Pro plan")
+    logger.notify("New premium subscription",
+        user_id="user_123",
+        plan="pro",
+        amount=99.99,
+        currency="USD"
+    )
 
 except Exception as e:
-    logger.critical(f"Fatal error: {str(e)}")
+    logger.critical(f"Fatal error",
+        error_type=type(e).__name__,
+        error_message=str(e),
+        stack_trace=True
+    )
     logger.flush()  # Ensure critical error is written
     raise
 finally:
-    logger.info("Shutting down")
+    logger.info("Shutting down", cleanup_time_ms=50)
     logger.flush()
 ```
 
@@ -605,4 +758,4 @@ finally:
 
 ## Summary
 
-Tamga provides a modern, fast, and feature-rich logging solution with beautiful console output and extensive integration options. Its buffered architecture and async support make it suitable for everything from simple scripts to high-performance distributed systems.
+Tamga provides a modern, fast, and feature-rich logging solution with beautiful console output and extensive integration options. Its buffered architecture, structured logging support, and async capabilities make it suitable for everything from simple scripts to high-performance distributed systems. The addition of key-value logging for all levels and pretty printing for complex objects makes debugging and log analysis significantly easier.
