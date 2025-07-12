@@ -19,7 +19,8 @@ A modern, high-performance logging utility for Python with multiple output forma
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
 - 🔔 **Notifications** - Multi-service notifications via [Apprise](https://github.com/caronc/apprise) (Discord, Slack, Email, SMS, and more)
-- 🔍 **Structured Logging** - Key-value data support with `dir()` method
+- 🔍 **Structured Logging** - Key-value data support on all log levels
+- 📝 **DIR Inspection** - Pretty print objects for debugging with `logger.dir()`
 
 ## 🚀 Quick Start
 
@@ -78,12 +79,17 @@ logger = Tamga(
 ### Structured Logging
 ```python
 # Log with key-value data
-logger.dir("User action",
+logger.info(
+    "User action",
     user_id="123",
     action="login",
     ip_address="192.168.1.1",
-    success=True
+    success=True,
 )
+
+# Object inspection
+sample_cart = {"items": ["apple", "banana"], "total": 4.5}
+logger.dir("Cart state", sample_cart)
 ```
 
 ### Production Setup
@@ -127,7 +133,7 @@ logger = Tamga(
 | NOTIFY | Purple | `logger.notify()` | Send notifications |
 | METRIC | Cyan | `logger.metric()` | Performance metrics |
 | TRACE | Gray | `logger.trace()` | Detailed trace info |
-| DIR | Yellow | `logger.dir()` | Structured key-value data |
+| DIR | Yellow | `logger.dir()` | Object inspection/debugging |
 | CUSTOM | Any | `logger.custom()` | Custom levels |
 
 ## 🔧 Advanced Features

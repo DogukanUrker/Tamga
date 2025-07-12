@@ -20,13 +20,17 @@ logger.critical("System outage detected")
 logger.debug("Debugging variable x=42")
 
 # Structured logging with key-value pairs
-logger.dir(
+logger.info(
     "User login event",
     user_id="abc123",
     action="login",
     ip_address="192.168.1.10",
     success=True,
 )
+
+# Object inspection
+sample_cart = {"items": ["apple", "banana"], "total": 4.5}
+logger.dir("Cart state", sample_cart)
 
 # Custom log level and color
 logger.custom("Payment received", "PAYMENT", "green")

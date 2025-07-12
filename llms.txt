@@ -225,11 +225,12 @@ logger.warning("High memory usage")  # WARNING not in notify_levels
 logger.custom("Deploy completed", "DEPLOY", "purple")
 
 # Structured logging with key-value data
-logger.dir("User action",
+logger.info(
+    "User action",
     user_id="123",
     action="login",
     ip_address="192.168.1.1",
-    success=True
+    success=True,
 )
 ```
 
@@ -381,21 +382,23 @@ def log_request(request):
     start_time = time.time()
 
     # Log request details
-    logger.dir("Request started",
+    logger.info(
+        "Request started",
         request_id=request_id,
         method=request.method,
         path=request.path,
-        ip=request.remote_addr
+        ip=request.remote_addr,
     )
 
     try:
         response = process(request)
         duration = time.time() - start_time
 
-        logger.dir("Request completed",
+        logger.info(
+            "Request completed",
             request_id=request_id,
             status=response.status_code,
-            duration_ms=round(duration * 1000)
+            duration_ms=round(duration * 1000),
         )
 
         return response
@@ -422,10 +425,11 @@ logger = Tamga(
 
 # Add service context to all logs
 def log_with_context(message, level="info"):
-    logger.dir(message,
+    logger.info(
+        message,
         service=service_name,
         version=os.getenv("VERSION"),
-        instance=os.getenv("INSTANCE_ID")
+        instance=os.getenv("INSTANCE_ID"),
     )
 ```
 
@@ -575,9 +579,10 @@ logger = Tamga(
 
 # Application usage
 logger.info("Application starting")
-logger.dir("Configuration loaded",
+logger.info(
+    "Configuration loaded",
     environment=os.getenv("ENV"),
-    debug_mode=True
+    debug_mode=True,
 )
 
 try:

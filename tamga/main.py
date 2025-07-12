@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 import threading
+import pprint
 from datetime import datetime
 from typing import Any, Dict
 
@@ -329,6 +330,15 @@ class Tamga:
             parts.append(current_timezone())
         return " | ".join(parts) if parts else ""
 
+    def _build_message(self, message: str, data: Dict[str, Any]) -> str:
+        """Append key-value data to message if provided."""
+        if not data:
+            return message
+        data_str = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace(
+            "\"", "'"
+        )
+        return f"{message} | {data_str}"
+
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
         if self.console_output:
@@ -631,26 +641,26 @@ class Tamga:
         except Exception:
             pass
 
-    def info(self, message: str) -> None:
-        self.log(message, "INFO", "sky")
+    def info(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "INFO", "sky")
 
-    def warning(self, message: str) -> None:
-        self.log(message, "WARNING", "amber")
+    def warning(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "WARNING", "amber")
 
-    def error(self, message: str) -> None:
-        self.log(message, "ERROR", "rose")
+    def error(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "ERROR", "rose")
 
-    def success(self, message: str) -> None:
-        self.log(message, "SUCCESS", "emerald")
+    def success(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "SUCCESS", "emerald")
 
-    def debug(self, message: str) -> None:
-        self.log(message, "DEBUG", "indigo")
+    def debug(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "DEBUG", "indigo")
 
-    def critical(self, message: str) -> None:
-        self.log(message, "CRITICAL", "red")
+    def critical(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "CRITICAL", "red")
 
-    def database(self, message: str) -> None:
-        self.log(message, "DATABASE", "green")
+    def database(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "DATABASE", "green")
 
     def notify(self, message: str, title: str = None, services: list = None) -> None:
         """
@@ -686,23 +696,16 @@ class Tamga:
         elif self.notify_services:
             self._send_notification_async(message, "NOTIFY", title)
 
-    def metric(self, message: str) -> None:
-        self.log(message, "METRIC", "cyan")
+    def metric(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "METRIC", "cyan")
 
-    def trace(self, message: str) -> None:
-        self.log(message, "TRACE", "gray")
+    def trace(self, message: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), "TRACE", "gray")
 
-    def custom(self, message: str, level: str, color: str) -> None:
-        self.log(message, level, color)
+    def custom(self, message: str, level: str, color: str, **kwargs) -> None:
+        self.log(self._build_message(message, kwargs), level, color)
 
-    def dir(self, message: str, **kwargs) -> None:
-        """Log message with additional key-value data."""
-        if kwargs:
-            data_str = json.dumps(
-                kwargs, ensure_ascii=False, separators=(",", ":")
-            ).replace('"', "'")
-            log_message = f"{message} | {data_str}"
-        else:
-            log_message = message
-
-        self.log(log_message, "DIR", "yellow")
+    def dir(self, message: str, obj: Any) -> None:
+        """Pretty print an object for debugging purposes."""
+        obj_str = pprint.pformat(obj, compact=True, width=80)
+        self.log(f"{message}: {obj_str}", "DIR", "yellow")

@@ -152,14 +152,33 @@ class TestTamgaCore(unittest.TestCase):
             buffer_size=1,
         )
 
-        logger.dir("User action", user_id=123, action="login", success=True)
+        sample = {"user_id": 123, "action": "login", "success": True}
+        logger.dir("User action", sample)
         logger.flush()
 
         with open(self.file_path, "r") as f:
             content = f.read()
             self.assertIn("User action", content)
             self.assertIn("user_id", content)
-            self.assertIn("123", content)
+        self.assertIn("123", content)
+
+    def test_key_value_logging(self):
+        """Test key-value logging on standard levels."""
+        logger = Tamga(
+            console_output=False,
+            file_output=True,
+            file_path=self.file_path,
+            buffer_size=1,
+        )
+
+        logger.info("Login", user="tester", ip="127.0.0.1")
+        logger.flush()
+
+        with open(self.file_path, "r") as f:
+            content = f.read()
+            self.assertIn("Login", content)
+            self.assertIn("tester", content)
+            self.assertIn("127.0.0.1", content)
 
     def test_file_rotation(self):
         """Test file rotation when size limit is reached."""

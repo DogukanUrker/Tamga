@@ -54,7 +54,7 @@ logger.critical("Database connection lost")
 logger.notify("New premium subscription purchased!")
 
 # Structured logging for business events
-logger.dir(
+logger.info(
     "User action",
     user_id="user_456",
     action="purchase",

@@ -18,14 +18,14 @@ logger = Tamga(
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    logger.dir(
+    logger.info(
         "Incoming request",
         method=request.method,
         path=request.url.path,
         client=str(request.client.host),
     )
     response = await call_next(request)
-    logger.dir(
+    logger.info(
         "Request completed",
         method=request.method,
         path=request.url.path,
