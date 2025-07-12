@@ -41,7 +41,6 @@ LOG_LEVELS: Dict[str, str] = {
     "NOTIFY": "purple",
     "METRIC": "cyan",
     "TRACE": "gray",
-    "DIR": "yellow",
 }
 
 LOG_EMOJIS: Dict[str, str] = {
@@ -55,5 +54,4 @@ LOG_EMOJIS: Dict[str, str] = {
     "NOTIFY": "📢",
     "METRIC": "📊",
     "TRACE": "🔍",
-    "DIR": "📝",
 }
