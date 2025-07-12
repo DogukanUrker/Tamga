@@ -565,7 +565,7 @@ class Tamga:
 
         try:
             with sqlite3.connect(self.sql_path) as conn:
-                data_json = json.dumps(log_data["data"]) if log_data["data"] else None
+                data_json = json.dumps(log_data["data"] or {})
 
                 conn.execute(
                     f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?, ?)",
