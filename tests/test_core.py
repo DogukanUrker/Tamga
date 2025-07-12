@@ -155,24 +155,39 @@ class TestTamgaCore(unittest.TestCase):
         # Test kwargs with different log levels
         logger.info("User login", user_id=123, action="login", success=True)
         logger.warning("High memory usage", memory_pct=85, threshold=80)
-        logger.error("Database connection failed", host="localhost", port=5432, timeout=30)
-        logger.success("Payment processed", amount=99.99, currency="USD", method="credit_card")
+        logger.error(
+            "Database connection failed", host="localhost", port=5432, timeout=30
+        )
+        logger.success(
+            "Payment processed", amount=99.99, currency="USD", method="credit_card"
+        )
         logger.debug("Cache stats", hits=150, misses=10, hit_rate=0.94)
         logger.critical("System overload", cpu_pct=95, memory_pct=98, disk_pct=99)
         logger.database("Query executed", table="users", rows=1000, duration_ms=250)
         logger.metric("Response time", endpoint="/api/users", avg_ms=125, p95_ms=200)
-        logger.trace("Function called", func="process_user", args=["user123"], kwargs={"validate": True})
-        logger.custom("Deploy completed", "DEPLOY", "purple", version="1.2.3", environment="production")
+        logger.trace(
+            "Function called",
+            func="process_user",
+            args=["user123"],
+            kwargs={"validate": True},
+        )
+        logger.custom(
+            "Deploy completed",
+            "DEPLOY",
+            "purple",
+            version="1.2.3",
+            environment="production",
+        )
         logger.flush()
 
         with open(self.file_path, "r") as f:
             content = f.read()
-            
+
             # Test that basic messages are present
             self.assertIn("User login", content)
             self.assertIn("High memory usage", content)
             self.assertIn("Database connection failed", content)
-            
+
             # Test that key-value data is present
             self.assertIn("user_id=123", content)
             self.assertIn("memory_pct=85", content)
