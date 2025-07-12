@@ -256,7 +256,9 @@ class Tamga:
                     f"Failed to initialize notifications: {e}", "ERROR", "red"
                 )
 
-    def _send_notification_async(self, message: str, level: str, title: str = None, data: dict = None):
+    def _send_notification_async(
+        self, message: str, level: str, title: str = None, data: dict = None
+    ):
         """Send notification asynchronously without blocking."""
         if not self.notify_services or not self._apprise:
             return
@@ -284,7 +286,9 @@ class Tamga:
         else:
             threading.Thread(target=send, daemon=True).start()
 
-    def _apply_default_template(self, message: str, level: str, data: dict = None) -> str:
+    def _apply_default_template(
+        self, message: str, level: str, data: dict = None
+    ) -> str:
         """Apply notification templates using the unified apprise module."""
         try:
             from .utils.apprise import format_notification
