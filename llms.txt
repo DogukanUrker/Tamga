@@ -224,13 +224,19 @@ logger.warning("High memory usage")  # WARNING not in notify_levels
 # Custom level and color
 logger.custom("Deploy completed", "DEPLOY", "purple")
 
-# Structured logging with key-value data
-logger.dir("User action",
+# Structured logging with key-value data using any log method
+logger.info("User action",
     user_id="123",
     action="login",
     ip_address="192.168.1.1",
     success=True
 )
+
+# Works with all log levels
+logger.error("Database connection failed", host="localhost", port=5432, timeout=30)
+logger.success("Payment processed", amount=99.99, currency="USD", method="credit_card")
+logger.warning("High memory usage", memory_pct=85, threshold=80)
+logger.critical("System overload", cpu_pct=95, memory_pct=98)
 ```
 
 ### Advanced Notification Usage
@@ -381,7 +387,7 @@ def log_request(request):
     start_time = time.time()
 
     # Log request details
-    logger.dir("Request started",
+    logger.info("Request started",
         request_id=request_id,
         method=request.method,
         path=request.path,
@@ -392,7 +398,7 @@ def log_request(request):
         response = process(request)
         duration = time.time() - start_time
 
-        logger.dir("Request completed",
+        logger.info("Request completed",
             request_id=request_id,
             status=response.status_code,
             duration_ms=round(duration * 1000)
@@ -422,7 +428,7 @@ logger = Tamga(
 
 # Add service context to all logs
 def log_with_context(message, level="info"):
-    logger.dir(message,
+    logger.info(message,
         service=service_name,
         version=os.getenv("VERSION"),
         instance=os.getenv("INSTANCE_ID")
@@ -575,7 +581,7 @@ logger = Tamga(
 
 # Application usage
 logger.info("Application starting")
-logger.dir("Configuration loaded",
+logger.info("Configuration loaded",
     environment=os.getenv("ENV"),
     debug_mode=True
 )

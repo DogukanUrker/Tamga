@@ -15,13 +15,8 @@ logger.warning("⚡️ API rate limit approaching (90%)")
 logger.error("💥 Payment failed: Card declined")
 logger.critical("🚨 Data breach detected! Initiating lockdown")
 logger.debug("🔍 Feature flag 'beta_mode' is ON")
-logger.custom("🛒 Checkout event: Cart abandoned", "METRIC", "cyan")
+logger.metric("🛒 Checkout event: Cart abandoned")
 logger.custom("🎨 Theme switched to 'dark mode'", "UI", "purple")
-logger.dir(
-    "🔑 User login",
-    user_id="42",
-    verified=True,
-)
-logger.info("🌈 All systems go. Have an epic day!")
+logger.info("🔑 User login", user_id="42", verified=True)
 
 print("\n")

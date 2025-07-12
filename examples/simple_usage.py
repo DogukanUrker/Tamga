@@ -20,7 +20,7 @@ logger.critical("System outage detected")
 logger.debug("Debugging variable x=42")
 
 # Structured logging with key-value pairs
-logger.dir(
+logger.info(
     "User login event",
     user_id="abc123",
     action="login",

@@ -1,10 +1,11 @@
 import asyncio
 import json
 import os
+import re
 import sqlite3
 import threading
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
@@ -303,12 +304,12 @@ class Tamga:
                 json.dump([], f)
 
     def _init_sql_db(self):
-        """Initialize SQLite database."""
+        """Initialize SQLite database with structured data support."""
         self._ensure_file_exists(self.sql_path)
         with sqlite3.connect(self.sql_path) as conn:
             conn.execute(
                 f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
-                (level TEXT, message TEXT, date TEXT, time TEXT,
+                (level TEXT, message TEXT, data TEXT, date TEXT, time TEXT,
                 timezone TEXT, timestamp REAL)"""
             )
 
@@ -329,6 +330,49 @@ class Tamga:
             parts.append(current_timezone())
         return " | ".join(parts) if parts else ""
 
+    def _parse_message_data(self, message: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Parse message to extract base message and structured data.
+
+        Args:
+            message: Message that may contain key-value data (e.g., "User login | user_id=123, action='login'")
+
+        Returns:
+            Tuple of (base_message, key_value_dict)
+        """
+        if " | " not in message:
+            return message, {}
+
+        parts = message.split(" | ", 1)
+        base_message = parts[0]
+        data_part = parts[1]
+
+        data_dict = {}
+        pattern = r"(\w+)=(?:'((?:[^'\\]|\\.)*)' |\"((?:[^\"\\]|\\.)*)\" |([^,]+?))(?=,\s*\w+=|$)"
+        matches = re.findall(pattern, data_part)
+
+        for match in matches:
+            key = match[0]
+            value = match[1] or match[2] or match[3]
+            value = value.strip()
+
+            if not (match[1] or match[2]):
+                try:
+                    if value.lower() in ("true", "false"):
+                        value = value.lower() == "true"
+                    elif (
+                        "." in value
+                        and value.replace(".", "", 1).replace("-", "", 1).isdigit()
+                    ):
+                        value = float(value)
+                    elif value.lstrip("-").isdigit():
+                        value = int(value)
+                except ValueError:
+                    pass
+            data_dict[key] = value
+
+        return base_message, data_dict
+
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
         if self.console_output:
@@ -338,9 +382,12 @@ class Tamga:
         """
         Main logging method that handles all types of logs.
         """
+        base_message, structured_data = self._parse_message_data(message)
 
         log_data = {
             "message": message,
+            "base_message": base_message,
+            "data": structured_data,
             "level": level,
             "color": color,
             "timestamp": self._format_timestamp(),
@@ -434,7 +481,8 @@ class Tamga:
                     json.dumps(
                         {
                             "level": log["level"],
-                            "message": log["message"],
+                            "message": log["base_message"],
+                            "data": log["data"],
                             "date": log["date"],
                             "time": log["time"],
                             "timezone": log["timezone"],
@@ -512,16 +560,19 @@ class Tamga:
         print(" ".join(output_parts))
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
-        """Write log entry to SQL database."""
+        """Write log entry to SQL database with structured data support."""
         self._handle_file_rotation(self.sql_path, self.max_sql_size_mb)
 
         try:
             with sqlite3.connect(self.sql_path) as conn:
+                data_json = json.dumps(log_data["data"] or {})
+
                 conn.execute(
-                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?)",
+                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (
                         log_data["level"],
-                        log_data["message"],
+                        log_data["base_message"],
+                        data_json,
                         log_data["date"],
                         log_data["time"],
                         log_data["timezone"] or "",
@@ -538,16 +589,17 @@ class Tamga:
 
         async def write():
             try:
-                await self._mongo_client.insert_one(
-                    {
-                        "level": log_data["level"],
-                        "message": log_data["message"],
-                        "date": log_data["date"],
-                        "time": log_data["time"],
-                        "timezone": log_data["timezone"],
-                        "timestamp": log_data["unix_timestamp"],
-                    }
-                )
+                document = {
+                    "level": log_data["level"],
+                    "message": log_data["base_message"],
+                    "data": log_data["data"],
+                    "date": log_data["date"],
+                    "time": log_data["time"],
+                    "timezone": log_data["timezone"],
+                    "timestamp": log_data["unix_timestamp"],
+                }
+
+                await self._mongo_client.insert_one(document)
             except Exception as e:
                 self._log_internal(f"Failed to write to MongoDB: {e}", "ERROR", "red")
 
@@ -601,6 +653,11 @@ class Tamga:
             elif filepath.endswith(".db"):
                 with sqlite3.connect(filepath) as conn:
                     conn.execute(f"DELETE FROM {self.sql_table_name}")
+                    conn.execute(
+                        f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
+                        (level TEXT, message TEXT, data TEXT, date TEXT, time TEXT,
+                        timezone TEXT, timestamp REAL)"""
+                    )
             else:
                 open(filepath, "w", encoding="utf-8").close()
 
@@ -631,37 +688,69 @@ class Tamga:
         except Exception:
             pass
 
-    def info(self, message: str) -> None:
-        self.log(message, "INFO", "sky")
-
-    def warning(self, message: str) -> None:
-        self.log(message, "WARNING", "amber")
-
-    def error(self, message: str) -> None:
-        self.log(message, "ERROR", "rose")
-
-    def success(self, message: str) -> None:
-        self.log(message, "SUCCESS", "emerald")
-
-    def debug(self, message: str) -> None:
-        self.log(message, "DEBUG", "indigo")
-
-    def critical(self, message: str) -> None:
-        self.log(message, "CRITICAL", "red")
-
-    def database(self, message: str) -> None:
-        self.log(message, "DATABASE", "green")
-
-    def notify(self, message: str, title: str = None, services: list = None) -> None:
+    def _format_kwargs(self, **kwargs) -> str:
         """
-        Send a notification through configured services.
+        Args:
+            **kwargs: Key-value pairs to format
+
+        Returns:
+            Formatted string representation of key-value data
+        """
+        if not kwargs:
+            return ""
+
+        pairs = [f"{k}={repr(v)}" for k, v in kwargs.items()]
+        return f" | {', '.join(pairs)}"
+
+    def info(self, message: str, **kwargs) -> None:
+        """Log info message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "INFO", "sky")
+
+    def warning(self, message: str, **kwargs) -> None:
+        """Log warning message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "WARNING", "amber")
+
+    def error(self, message: str, **kwargs) -> None:
+        """Log error message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "ERROR", "rose")
+
+    def success(self, message: str, **kwargs) -> None:
+        """Log success message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "SUCCESS", "emerald")
+
+    def debug(self, message: str, **kwargs) -> None:
+        """Log debug message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "DEBUG", "indigo")
+
+    def critical(self, message: str, **kwargs) -> None:
+        """Log critical message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "CRITICAL", "red")
+
+    def database(self, message: str, **kwargs) -> None:
+        """Log database message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "DATABASE", "green")
+
+    def notify(
+        self, message: str, title: str = None, services: list = None, **kwargs
+    ) -> None:
+        """
+        Send a notification through configured services with optional key-value data.
 
         Args:
             message: Notification message
             title: Optional custom title (overrides template)
             services: Optional list of services (overrides defaults)
+            **kwargs: Optional key-value data to include in message
         """
-        self.log(message, "NOTIFY", "purple")
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "NOTIFY", "purple")
 
         if services:
             try:
@@ -679,30 +768,24 @@ class Tamga:
                 )
 
                 temp_apprise.notify(
-                    body=message, title=final_title, body_format=self.notify_format
+                    body=full_message, title=final_title, body_format=self.notify_format
                 )
             except Exception as e:
                 self._log_internal(f"Custom notification failed: {e}", "ERROR", "red")
         elif self.notify_services:
-            self._send_notification_async(message, "NOTIFY", title)
+            self._send_notification_async(full_message, "NOTIFY", title)
 
-    def metric(self, message: str) -> None:
-        self.log(message, "METRIC", "cyan")
+    def metric(self, message: str, **kwargs) -> None:
+        """Log metric message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "METRIC", "cyan")
 
-    def trace(self, message: str) -> None:
-        self.log(message, "TRACE", "gray")
+    def trace(self, message: str, **kwargs) -> None:
+        """Log trace message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, "TRACE", "gray")
 
-    def custom(self, message: str, level: str, color: str) -> None:
-        self.log(message, level, color)
-
-    def dir(self, message: str, **kwargs) -> None:
-        """Log message with additional key-value data."""
-        if kwargs:
-            data_str = json.dumps(
-                kwargs, ensure_ascii=False, separators=(",", ":")
-            ).replace('"', "'")
-            log_message = f"{message} | {data_str}"
-        else:
-            log_message = message
-
-        self.log(log_message, "DIR", "yellow")
+    def custom(self, message: str, level: str, color: str, **kwargs) -> None:
+        """Log custom message with optional key-value data."""
+        full_message = message + self._format_kwargs(**kwargs)
+        self.log(full_message, level, color)
