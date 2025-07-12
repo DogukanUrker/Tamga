@@ -1,10 +1,11 @@
 import asyncio
 import json
 import os
+import re
 import sqlite3
 import threading
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from .constants import LOG_LEVELS
 from .utils.colors import Color
@@ -303,12 +304,12 @@ class Tamga:
                 json.dump([], f)
 
     def _init_sql_db(self):
-        """Initialize SQLite database."""
+        """Initialize SQLite database with structured data support."""
         self._ensure_file_exists(self.sql_path)
         with sqlite3.connect(self.sql_path) as conn:
             conn.execute(
                 f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
-                (level TEXT, message TEXT, date TEXT, time TEXT,
+                (level TEXT, message TEXT, data TEXT, date TEXT, time TEXT,
                 timezone TEXT, timestamp REAL)"""
             )
 
@@ -329,6 +330,45 @@ class Tamga:
             parts.append(current_timezone())
         return " | ".join(parts) if parts else ""
 
+    def _parse_message_data(self, message: str) -> Tuple[str, Dict[str, Any]]:
+        """
+        Parse message to extract base message and structured data.
+
+        Args:
+            message: Message that may contain key-value data (e.g., "User login | user_id=123, action='login'")
+
+        Returns:
+            Tuple of (base_message, key_value_dict)
+        """
+        if " | " not in message:
+            return message, {}
+
+        parts = message.split(" | ", 1)
+        base_message = parts[0]
+        data_part = parts[1]
+
+        data_dict = {}
+        pattern = r"(\w+)=([^,]+?)(?=,\s*\w+=|$)"
+        matches = re.findall(pattern, data_part)
+
+        for key, value in matches:
+            value = value.strip()
+            if value.startswith(("'", '"')) and value.endswith(("'", '"')):
+                value = value[1:-1]
+            else:
+                try:
+                    if value.lower() in ("true", "false"):
+                        value = value.lower() == "true"
+                    elif "." in value:
+                        value = float(value)
+                    else:
+                        value = int(value)
+                except ValueError:
+                    pass
+            data_dict[key] = value
+
+        return base_message, data_dict
+
     def _log_internal(self, message: str, level: str, color: str):
         """Internal logging for Tamga messages."""
         if self.console_output:
@@ -338,9 +378,12 @@ class Tamga:
         """
         Main logging method that handles all types of logs.
         """
+        base_message, structured_data = self._parse_message_data(message)
 
         log_data = {
             "message": message,
+            "base_message": base_message,
+            "data": structured_data,
             "level": level,
             "color": color,
             "timestamp": self._format_timestamp(),
@@ -434,7 +477,8 @@ class Tamga:
                     json.dumps(
                         {
                             "level": log["level"],
-                            "message": log["message"],
+                            "message": log["base_message"],
+                            "data": log["data"],
                             "date": log["date"],
                             "time": log["time"],
                             "timezone": log["timezone"],
@@ -512,16 +556,19 @@ class Tamga:
         print(" ".join(output_parts))
 
     def _write_to_sql(self, log_data: Dict[str, Any]):
-        """Write log entry to SQL database."""
+        """Write log entry to SQL database with structured data support."""
         self._handle_file_rotation(self.sql_path, self.max_sql_size_mb)
 
         try:
             with sqlite3.connect(self.sql_path) as conn:
+                data_json = json.dumps(log_data["data"]) if log_data["data"] else None
+
                 conn.execute(
-                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?)",
+                    f"INSERT INTO {self.sql_table_name} VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (
                         log_data["level"],
-                        log_data["message"],
+                        log_data["base_message"],
+                        data_json,
                         log_data["date"],
                         log_data["time"],
                         log_data["timezone"] or "",
@@ -538,16 +585,17 @@ class Tamga:
 
         async def write():
             try:
-                await self._mongo_client.insert_one(
-                    {
-                        "level": log_data["level"],
-                        "message": log_data["message"],
-                        "date": log_data["date"],
-                        "time": log_data["time"],
-                        "timezone": log_data["timezone"],
-                        "timestamp": log_data["unix_timestamp"],
-                    }
-                )
+                document = {
+                    "level": log_data["level"],
+                    "message": log_data["base_message"],
+                    "data": log_data["data"],
+                    "date": log_data["date"],
+                    "time": log_data["time"],
+                    "timezone": log_data["timezone"],
+                    "timestamp": log_data["unix_timestamp"],
+                }
+
+                await self._mongo_client.insert_one(document)
             except Exception as e:
                 self._log_internal(f"Failed to write to MongoDB: {e}", "ERROR", "red")
 
@@ -601,6 +649,11 @@ class Tamga:
             elif filepath.endswith(".db"):
                 with sqlite3.connect(filepath) as conn:
                     conn.execute(f"DELETE FROM {self.sql_table_name}")
+                    conn.execute(
+                        f"""CREATE TABLE IF NOT EXISTS {self.sql_table_name}
+                        (level TEXT, message TEXT, data TEXT, date TEXT, time TEXT,
+                        timezone TEXT, timestamp REAL)"""
+                    )
             else:
                 open(filepath, "w", encoding="utf-8").close()
 
