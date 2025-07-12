@@ -19,7 +19,8 @@ A modern, high-performance logging utility for Python with multiple output forma
 - 🔄 **Automatic Rotation** - File size management with backup support
 - 🧵 **Thread-Safe** - Safe for multi-threaded applications
 - 🔔 **Notifications** - Multi-service notifications via [Apprise](https://github.com/caronc/apprise) (Discord, Slack, Email, SMS, and more)
-- 🔍 **Structured Logging** - Key-value data support with `dir()` method
+- 🔍 **Structured Logging** - Key-value data support via `**kwargs` on any log level
+- 📂 **DIR Pretty Print** - Multi-line output for `logger.dir()`
 
 ## 🚀 Quick Start
 
@@ -78,11 +79,12 @@ logger = Tamga(
 ### Structured Logging
 ```python
 # Log with key-value data
-logger.dir("User action",
+logger.dir(
+    "User action",
     user_id="123",
     action="login",
     ip_address="192.168.1.1",
-    success=True
+    success=True,
 )
 ```
 

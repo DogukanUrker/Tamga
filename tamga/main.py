@@ -334,10 +334,25 @@ class Tamga:
         if self.console_output:
             self._write_to_console(message, level, color)
 
-    def log(self, message: str, level: str, color: str) -> None:
+    def log(self, message: str, level: str, color: str, **kwargs) -> None:
+        """Main logging method supporting structured key-value data.
+
+        Non-DIR levels append kwargs as a compact JSON string, while the
+        ``DIR`` level pretty prints the data on separate lines for easier
+        inspection.
         """
-        Main logging method that handles all types of logs.
-        """
+
+        if kwargs:
+            if level == "DIR":
+                data_str = json.dumps(
+                    kwargs, ensure_ascii=False, indent=2
+                ).replace('"', "'")
+                message = f"{message}\n{data_str}"
+            else:
+                data_str = json.dumps(
+                    kwargs, ensure_ascii=False, separators=(",", ":")
+                ).replace('"', "'")
+                message = f"{message} | {data_str}"
 
         log_data = {
             "message": message,
@@ -631,26 +646,33 @@ class Tamga:
         except Exception:
             pass
 
-    def info(self, message: str) -> None:
-        self.log(message, "INFO", "sky")
+    def info(self, message: str, **kwargs) -> None:
+        """Log an info level message."""
+        self.log(message, "INFO", "sky", **kwargs)
 
-    def warning(self, message: str) -> None:
-        self.log(message, "WARNING", "amber")
+    def warning(self, message: str, **kwargs) -> None:
+        """Log a warning level message."""
+        self.log(message, "WARNING", "amber", **kwargs)
 
-    def error(self, message: str) -> None:
-        self.log(message, "ERROR", "rose")
+    def error(self, message: str, **kwargs) -> None:
+        """Log an error level message."""
+        self.log(message, "ERROR", "rose", **kwargs)
 
-    def success(self, message: str) -> None:
-        self.log(message, "SUCCESS", "emerald")
+    def success(self, message: str, **kwargs) -> None:
+        """Log a success level message."""
+        self.log(message, "SUCCESS", "emerald", **kwargs)
 
-    def debug(self, message: str) -> None:
-        self.log(message, "DEBUG", "indigo")
+    def debug(self, message: str, **kwargs) -> None:
+        """Log a debug level message."""
+        self.log(message, "DEBUG", "indigo", **kwargs)
 
-    def critical(self, message: str) -> None:
-        self.log(message, "CRITICAL", "red")
+    def critical(self, message: str, **kwargs) -> None:
+        """Log a critical level message."""
+        self.log(message, "CRITICAL", "red", **kwargs)
 
-    def database(self, message: str) -> None:
-        self.log(message, "DATABASE", "green")
+    def database(self, message: str, **kwargs) -> None:
+        """Log a database level message."""
+        self.log(message, "DATABASE", "green", **kwargs)
 
     def notify(self, message: str, title: str = None, services: list = None) -> None:
         """
@@ -686,23 +708,18 @@ class Tamga:
         elif self.notify_services:
             self._send_notification_async(message, "NOTIFY", title)
 
-    def metric(self, message: str) -> None:
-        self.log(message, "METRIC", "cyan")
+    def metric(self, message: str, **kwargs) -> None:
+        """Log a metric level message."""
+        self.log(message, "METRIC", "cyan", **kwargs)
 
-    def trace(self, message: str) -> None:
-        self.log(message, "TRACE", "gray")
+    def trace(self, message: str, **kwargs) -> None:
+        """Log a trace level message."""
+        self.log(message, "TRACE", "gray", **kwargs)
 
-    def custom(self, message: str, level: str, color: str) -> None:
-        self.log(message, level, color)
+    def custom(self, message: str, level: str, color: str, **kwargs) -> None:
+        """Log a custom level message."""
+        self.log(message, level, color, **kwargs)
 
     def dir(self, message: str, **kwargs) -> None:
-        """Log message with additional key-value data."""
-        if kwargs:
-            data_str = json.dumps(
-                kwargs, ensure_ascii=False, separators=(",", ":")
-            ).replace('"', "'")
-            log_message = f"{message} | {data_str}"
-        else:
-            log_message = message
-
-        self.log(log_message, "DIR", "yellow")
+        """Pretty-print structured data using the ``DIR`` level."""
+        self.log(message, "DIR", "yellow", **kwargs)

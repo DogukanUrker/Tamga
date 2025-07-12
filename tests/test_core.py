@@ -161,6 +161,24 @@ class TestTamgaCore(unittest.TestCase):
             self.assertIn("user_id", content)
             self.assertIn("123", content)
 
+    def test_kwargs_logging(self):
+        """Test structured logging via kwargs on standard methods."""
+        logger = Tamga(
+            console_output=False,
+            file_output=True,
+            file_path=self.file_path,
+            buffer_size=1,
+        )
+
+        logger.info("Login event", user_id=456, success=True)
+        logger.flush()
+
+        with open(self.file_path, "r") as f:
+            content = f.read()
+            self.assertIn("Login event", content)
+            self.assertIn("user_id", content)
+            self.assertIn("456", content)
+
     def test_file_rotation(self):
         """Test file rotation when size limit is reached."""
         logger = Tamga(
