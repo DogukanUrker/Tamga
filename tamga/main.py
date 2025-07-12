@@ -348,7 +348,8 @@ class Tamga:
         data_part = parts[1]
 
         data_dict = {}
-        pattern = r"(\w+)=(?:'([^']*)'|\"([^\"]*)\"|([^,]+?))(?=,\s*\w+=|$)"
+        # More robust pattern that handles escaped quotes and commas
+        pattern = r"(\w+)=(?:'((?:[^'\\]|\\.)*)' |\"((?:[^\"\\]|\\.)*)\" |([^,]+?))(?=,\s*\w+=|$)"
         matches = re.findall(pattern, data_part)
 
         for match in matches:
@@ -356,14 +357,14 @@ class Tamga:
             value = match[1] or match[2] or match[3]
             value = value.strip()
 
+            # Only perform type inference for unquoted values
             if not (match[1] or match[2]):
                 try:
+                    # Be more explicit about boolean parsing
                     if value.lower() in ("true", "false"):
                         value = value.lower() == "true"
-                    elif (
-                        "." in value
-                        and value.replace(".", "").replace("-", "").isdigit()
-                    ):
+                    # Add validation for numeric parsing
+                    elif "." in value and value.replace(".", "", 1).replace("-", "", 1).isdigit():
                         value = float(value)
                     elif value.lstrip("-").isdigit():
                         value = int(value)
