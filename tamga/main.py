@@ -348,20 +348,24 @@ class Tamga:
         data_part = parts[1]
 
         data_dict = {}
-        pattern = r"(\w+)=([^,]+?)(?=,\s*\w+=|$)"
+        pattern = r"(\w+)=(?:'([^']*)'|\"([^\"]*)\"|([^,]+?))(?=,\s*\w+=|$)"
         matches = re.findall(pattern, data_part)
 
-        for key, value in matches:
+        for match in matches:
+            key = match[0]
+            value = match[1] or match[2] or match[3]
             value = value.strip()
-            if value.startswith(("'", '"')) and value.endswith(("'", '"')):
-                value = value[1:-1]
-            else:
+
+            if not (match[1] or match[2]):
                 try:
                     if value.lower() in ("true", "false"):
                         value = value.lower() == "true"
-                    elif "." in value:
+                    elif (
+                        "." in value
+                        and value.replace(".", "").replace("-", "").isdigit()
+                    ):
                         value = float(value)
-                    else:
+                    elif value.lstrip("-").isdigit():
                         value = int(value)
                 except ValueError:
                     pass
