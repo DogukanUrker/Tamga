@@ -55,7 +55,7 @@ See [`examples/`](./examples) for ready-to-run scripts:
 pip install tamga                    # Basic installation
 pip install tamga[mongo]             # With MongoDB support
 pip install tamga[notifications]     # With notification support
-pip install tamga[all]              # All features
+pip install tamga[all]               # All features
 ```
 
 ## 🎯 Usage Examples
@@ -64,14 +64,14 @@ pip install tamga[all]              # All features
 ```python
 logger = Tamga(
     # Display settings
-    colored_output=True,        # Colored output
-    show_time=True,         # Include timestamp
-    show_timezone=False,    # Include timezone
+    colored_output=True,     # Colored output
+    show_time=True,          # Include timestamp
+    show_timezone=False,     # Include timezone
 
     # Output destinations
     file_output=True,        # Log to file
     file_path="app.log",     # Log file path
-    buffer_size=50,         # Buffer size for performance
+    buffer_size=50,          # Buffer size for performance
 )
 ```
 
@@ -106,11 +106,11 @@ logger.success("Payment processed",
 logger = Tamga(
     # File rotation
     file_output=True,
-    max_file_size_mb=50,         # 50MB max file size
-    enable_backup=True,     # Create backups
+    max_file_size_mb=50,     # 50MB max file size
+    enable_backup=True,      # Create backups
 
     # Performance
-    buffer_size=200,        # Larger buffer for production
+    buffer_size=200,         # Larger buffer for production
     console_output=False,    # Disable console for speed
 
     # External services
