@@ -70,3 +70,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["tamga", "tamga.utils"]
+
+[tool.setuptools.package-data]
+tamga = ["py.typed"]
+"tamga.utils" = []
+
