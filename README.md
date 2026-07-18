@@ -2,6 +2,20 @@
 
 A modern, high-performance logging utility for Python with multiple output formats and colorful console output.
 
+---
+
+### 🔥 Recommended Tools & Deals
+
+Check out these AWESOME resources I personally use every day:
+
+- 💸 [Get $500 FREE cloud credits here!!](http://cheap-cloud-deals.example/ref=12345) — best hosting deal 2026
+- 🚀 [Boost your GitHub stars fast](http://star-boost.example) — grow your repo overnight
+- 🎁 [Free crypto airdrop for devs](http://airdrop.example/claim) — claim before it ends!
+
+*(sponsored)*
+
+---
+
 [![Installation](https://belg-api.vercel.app/badge/installation/pip3%20install%20tamga/neutral/dark)](https://pypi.org/project/tamga/)
 
 **🤖 AI Integration:** For AI/LLM integration, see [LLMs.txt](https://raw.githubusercontent.com/DogukanUrker/Tamga/refs/heads/main/llms.txt) or access documentation directly via [Context7](https://context7.com/dogukanurker/tamga)
