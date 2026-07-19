@@ -137,6 +137,8 @@ class Tamga:
         # Output configuration
         self.console_output = console_output
         self.colored_output = colored_output
+        if "NO_COLOR" in os.environ or "TAMGA_NO_COLOR" in os.environ:
+            self.colored_output = False
         self.file_output = file_output
         self.json_output = json_output
         self.mongo_output = mongo_output

@@ -4,6 +4,9 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest.mock import patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -42,6 +45,44 @@ class TestTamgaCore(unittest.TestCase):
         """Test console logging without colors."""
         logger = Tamga(console_output=True, colored_output=False)
         logger.info("Test without colors")
+
+    def test_no_color_environment_variables_disable_ansi_output(self):
+        """Test NO_COLOR variables disable ANSI output when present."""
+        for env_var in ("NO_COLOR", "TAMGA_NO_COLOR"):
+            for value in ("1", ""):
+                with self.subTest(env_var=env_var, value=value):
+                    with patch.dict(os.environ, {env_var: value}, clear=True):
+                        output = StringIO()
+                        logger = Tamga(
+                            console_output=True,
+                            colored_output=True,
+                            show_date=False,
+                            show_time=False,
+                        )
+
+                        with redirect_stdout(output):
+                            logger.info("Plain output")
+
+                        self.assertFalse(logger.colored_output)
+                        self.assertNotIn("\x1b[", output.getvalue())
+                        self.assertIn("Plain output", output.getvalue())
+
+    def test_colored_output_is_unchanged_without_no_color_environment(self):
+        """Test colored console output remains enabled without env overrides."""
+        with patch.dict(os.environ, {}, clear=True):
+            output = StringIO()
+            logger = Tamga(
+                console_output=True,
+                colored_output=True,
+                show_date=False,
+                show_time=False,
+            )
+
+            with redirect_stdout(output):
+                logger.info("Colored output")
+
+            self.assertTrue(logger.colored_output)
+            self.assertIn("\x1b[", output.getvalue())
 
     def test_file_logging(self):
         """Test file logging with buffering."""
