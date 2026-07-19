@@ -27,6 +27,32 @@ class TestTamgaCore(unittest.TestCase):
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
+    def test_repr(self):
+        """Test readable output configuration representation."""
+        logger = Tamga()
+        self.assertEqual(
+            repr(logger),
+            "Tamga(console=True, file=False, json=False, sql=False, mongo=False)",
+        )
+
+        configured_logger = Tamga(
+            console_output=False,
+            file_output=True,
+            json_output=True,
+            sql_output=True,
+            file_path=self.file_path,
+            json_path=self.json_file,
+            sql_path=self.sql_file,
+        )
+        self.assertEqual(
+            repr(configured_logger),
+            (
+                "Tamga(console=False, file=True, json=True, sql=True, mongo=False, "
+                f"file_path={self.file_path!r}, json_path={self.json_file!r}, "
+                f"sql_path={self.sql_file!r})"
+            ),
+        )
+
     def test_console_logging(self):
         """Test basic console logging functionality."""
         # Just ensure no exceptions are raised
