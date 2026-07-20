@@ -189,6 +189,25 @@ class Tamga:
 
         self._init_services()
 
+    def __repr__(self) -> str:
+        """Return the active output configuration for debugging."""
+        parts = [
+            f"console={self.console_output}",
+            f"file={self.file_output}",
+            f"json={self.json_output}",
+            f"sql={self.sql_output}",
+            f"mongo={self.mongo_output}",
+        ]
+
+        if self.file_output:
+            parts.append(f"file_path={self.file_path!r}")
+        if self.json_output:
+            parts.append(f"json_path={self.json_path!r}")
+        if self.sql_output:
+            parts.append(f"sql_path={self.sql_path!r}")
+
+        return f"Tamga({', '.join(parts)})"
+
     def _init_services(self):
         """Initialize external services and create necessary files."""
         if self.mongo_output:
