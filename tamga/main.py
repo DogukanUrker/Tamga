@@ -30,6 +30,7 @@ class Tamga:
         "colored_output",
         "file_output",
         "json_output",
+        "jsonl_output",
         "mongo_output",
         "sql_output",
         # Display settings
@@ -39,6 +40,7 @@ class Tamga:
         # File paths and configurations
         "file_path",
         "json_path",
+        "jsonl_path",
         "sql_path",
         "sql_table_name",
         # MongoDB configuration
@@ -53,6 +55,7 @@ class Tamga:
         # Size limits and buffering
         "max_file_size_mb",
         "max_json_size_mb",
+        "max_jsonl_size_mb",
         "max_sql_size_mb",
         "enable_backup",
         "buffer_size",
@@ -64,6 +67,7 @@ class Tamga:
         "_notify_executor",
         "_file_buffer",
         "_json_buffer",
+        "_jsonl_buffer",
         "_buffer_lock",
         "_color_cache",
         "_json_file_handle",
@@ -77,6 +81,7 @@ class Tamga:
         colored_output: bool = True,
         file_output: bool = False,
         json_output: bool = False,
+        jsonl_output: bool = False,
         mongo_output: bool = False,
         sql_output: bool = False,
         # Display settings
@@ -86,6 +91,7 @@ class Tamga:
         # File paths and configurations
         file_path: str = "tamga.log",
         json_path: str = "tamga.json",
+        jsonl_path: str = "tamga.jsonl",
         sql_path: str = "tamga.db",
         sql_table_name: str = "logs",
         # MongoDB configuration
@@ -100,6 +106,7 @@ class Tamga:
         # Size limits and buffering
         max_file_size_mb: int = 10,
         max_json_size_mb: int = 10,
+        max_jsonl_size_mb: int = 10,
         max_sql_size_mb: int = 50,
         enable_backup: bool = True,
         buffer_size: int = 50,
@@ -141,6 +148,7 @@ class Tamga:
             self.colored_output = False
         self.file_output = file_output
         self.json_output = json_output
+        self.jsonl_output = jsonl_output
         self.mongo_output = mongo_output
         self.sql_output = sql_output
 
@@ -152,6 +160,7 @@ class Tamga:
         # File paths and configurations
         self.file_path = file_path
         self.json_path = json_path
+        self.jsonl_path = jsonl_path
         self.sql_path = sql_path
         self.sql_table_name = sql_table_name
 
@@ -169,6 +178,7 @@ class Tamga:
         # Size limits and buffering
         self.max_file_size_mb = max_file_size_mb
         self.max_json_size_mb = max_json_size_mb
+        self.max_jsonl_size_mb = max_jsonl_size_mb
         self.max_sql_size_mb = max_sql_size_mb
         self.enable_backup = enable_backup
         self.buffer_size = buffer_size
@@ -182,6 +192,7 @@ class Tamga:
         self._notify_executor = None
         self._file_buffer = []
         self._json_buffer = []
+        self._jsonl_buffer = []
         self._buffer_lock = threading.Lock()
         self._color_cache = {}
         self._json_file_handle = None
@@ -427,6 +438,9 @@ class Tamga:
         if self.json_output:
             self._buffer_json_write(log_data)
 
+        if self.jsonl_output:
+            self._buffer_jsonl_write(log_data)
+
         if self.sql_output:
             self._write_to_sql(log_data)
 
@@ -452,6 +466,49 @@ class Tamga:
             self._json_buffer.append(log_data)
             if len(self._json_buffer) >= self.buffer_size:
                 self._flush_json_buffer()
+
+    def _buffer_jsonl_write(self, log_data: Dict[str, Any]):
+        """Buffer JSON Lines writes for better performance."""
+        with self._buffer_lock:
+            self._jsonl_buffer.append(log_data)
+            if len(self._jsonl_buffer) >= self.buffer_size:
+                self._flush_jsonl_buffer()
+
+    def _flush_jsonl_buffer(self):
+        """Flush JSON Lines buffer to disk.
+
+        Unlike the JSON array format, JSONL appends one self-contained JSON
+        object per line, so writes are pure appends with no seek/rewrite of the
+        existing file. This makes it safe for streaming, log shipping and tools
+        like `jq` that consume newline-delimited JSON.
+        """
+        if not self._jsonl_buffer:
+            return
+
+        self._handle_file_rotation(self.jsonl_path, self.max_jsonl_size_mb)
+
+        try:
+            with open(self.jsonl_path, "a", encoding="utf-8") as f:
+                for log in self._jsonl_buffer:
+                    f.write(
+                        json.dumps(
+                            {
+                                "level": log["level"],
+                                "message": log["base_message"],
+                                "data": log["data"],
+                                "date": log["date"],
+                                "time": log["time"],
+                                "timezone": log["timezone"],
+                                "timestamp": log["unix_timestamp"],
+                            },
+                            ensure_ascii=False,
+                            separators=(",", ":"),
+                        )
+                        + "\n"
+                    )
+            self._jsonl_buffer.clear()
+        except Exception as e:
+            self._log_internal(f"Failed to write to JSONL: {e}", "ERROR", "red")
 
     def _flush_file_buffer(self):
         """Flush file buffer to disk."""
@@ -696,6 +753,8 @@ class Tamga:
                 self._flush_file_buffer()
             if self._json_buffer:
                 self._flush_json_buffer()
+            if self._jsonl_buffer:
+                self._flush_jsonl_buffer()
 
     def __del__(self):
         """Cleanup when logger is destroyed."""
